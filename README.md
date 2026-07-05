@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## ***Your Digital Renaissance Book Garden***
+*This app is built for those that want to rekindle that spark and love for reading they had as children and teenagers but lost somewhere along the way, as well as those that have a reading routine and want to sustain it with momentum to not lose it.*
 
-## Getting Started
+The building project name is Book Momentum but the final name is very subject to change.
 
-First, run the development server:
+I am patient zero. I have just gotten back into reading and I want to keep my momentum. I read an incredible amount as a kid. But I noticed a month ago that I had lost that love now as an adult in this fast-moving world. I'm building an app that I myself will use first and foremost and then I'll build it out with Friends and social features.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**The main features of this app are all built around _intentionality_** 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### **Horizon Books**
+A user can have up to 5 Horizon Books. These are the books where it's not a question about *if* you're going to read them but ***when.*** The dense literary masterpieces that you don't want to dive into in the beginning of your reading journey or when just starting out again. You want to work your way up to these, build momentum enough to tackle them. But we also always when them visible on the user's horizon in their reading journey.  
+Intentionally restricted and kept to a maximum of 5 at any given time, even 10 would be too many. We don't want this to become "TBR Pile: Part 2". This special list is all about clarity and conscious choice. When the user marks a Horizon Books as Reading, they will be met with a message of encouragement and when it's then switched to Read, they will be greeted with a message of gratification and celebration. At this point they are also able to slot a new Horizon book into the now-empty slot.  
+My 5 Horizon Books are Brothers Karamazov, The Count of Monte Cristo, Crime and Punishment, Lonesome Dove, and The Stormlight Archive series
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### **Reading Tracks**
+A user will be able to have 1 to 5 parallell Reading Tracks at any given time. And for any given Reading Track, they can have 1 active book. When a book is slotted into a track as Currently Reading, the UI intelligently prompts the user to define the _Follow-Up_, removing all friction from picking up their next read. If the Currently Reading is part of a series, the app suggests the next book in the series by default.  
+My 3 Reading Tracks are Fiction, Non-fiction, and Bedtime (Harry Potter before bed is a non-negotiable haha!)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### **Reading Session**
+My Lock In Intention timer code will be borrowed over here! Put in a new context as an integrated, distraction-free reading timer. And when life inevitably interrupts a session, there is no punishing "Quit" or "Reset" button. The user clicks **Wrap Up**, the timer freezes, and a contextual log slides up allowing them to capture the exact partial time and pages read alongside a reflection note.
 
-## Learn More
+### **Recommendation Provenance**
+Book recommendations rarely appear in a vacuum. An absence of Goodreads that baffles me is the inability to add notes to book in your "Want to Read" list. A user will be able to here; in their TBR stack, they can attach context to _how_ a book found them (e.g., a YouTube video, a friend's recommendation, or a podcast quote)
 
-To learn more about Next.js, take a look at the following resources:
+### **Re-Reading Journeys!**
+I want the app to highly encourage re-reading of the books in "My Bookshelf". Heraclitus said _"No man ever steps in the same river twice."_ If a user returns to a favorite book years later, historical reading sessions won't bleed into the current one and instead becomes its own Reading Journey. There are so many books that I myself want to revisit now with fresh new eyes!  
+Quick note on having books makred as "Read" and rating them: 4.5 is now possible! One of my biggest gripes with Goodreads is that I can't rate books 4.5 and 3.5 haha!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### **Some of the technical stuff**
+The project is built using Next.js, TypeScript and TailwindCSS.
+The external API for all book data is Gutenberg API: https://gutenbergapi.com/
+Gutenberg acts as the massive library and the main source of book data. But when a user wants to add a book to their User Bookshelf, we create a "local copy" to our own Book table with only the essential data for the app to function for faster look-ups now that we've confirmed this is a relevant book to the users. 
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+<img width="949" height="951" alt="BookMomentum drawio" src="https://github.com/user-attachments/assets/bc62b82d-6029-41b0-82dd-f44ca5628513" />
 
-## Deploy on Vercel
+The Book table has all the book-specific data for a specific Edition of a book, the Bookshelf_Item table has all the user-specific data for a specific instance of said book. Changing editions of a book in My Bookshelf is something the database easily allows.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Rather than having an is_horizon_book boolean in the Bookshelf_Item table, I've opted for a horizon_slot integer row which will be a nullable integer between 1 to 5. A boolean can only give *if* a book is a Horizon Book, the integers can also give *the order* which simplifies building the UI a lot! The exact same rationale applies to the Peak books and peak_slot
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+Design-wise, I want to lean heavily into "Digital Renaissance Book Garden". Lots of green, olive etc.
+
+I'll add and elaborate more here as I build 🌱
