@@ -13,7 +13,7 @@ export default async function LoginPage() {
   // Check if the user is already logged in before rendering anything
   const user = await getCurrentUser();
 
-  // Gracefully redirect them to the Profile Page is they already have a JWT cookie set
+  // Gracefully redirect them to the Profile Page if they already have a JWT cookie set
   if (user) {
     redirect('/profile');
   }
