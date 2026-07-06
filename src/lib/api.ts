@@ -28,7 +28,7 @@ export const searchBooks = async (query: string, page = 1, limit = 20) => { // K
       page_size: limit.toString()
     });
 
-    const res = await fetch(`${BASE_URL}/search?${params.toString()}`, {
+    const res = await fetch(`${BASE_URL}/books?${params.toString()}`, {
       headers: getHeaders(),
     });
 
