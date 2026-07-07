@@ -22,6 +22,28 @@ export default function AddToBookshelfButton({ book }: AddToBookshelfButtonProps
           "cover_image_url": book.cover_image
         })
       });
+
+      const addedBookResponse = await res.json(); // Extracting the id of the added book is now possible thanks to the change in the Route Handler!
+
+      // Safety check just in case the upsert failed
+      if (!addedBookResponse.data?.id) {
+        throw new Error("Failed to retrieve the local database ID for this book.");
+      }
+
+      console.log("Successfully upserted book. Local DB ID:", addedBookResponse.data.id);
+
+      // Create the Bookshelf Item instance and add the relationship to the Bookshelf_Item table
+      const itemRes = await fetch('/api/bookshelf', {
+        'method': 'POST',
+        'body': JSON.stringify({
+          "book_id": addedBookResponse.data.id,
+          "status_id": 1 // Default to 1:Want to Read for now
+        })
+      });
+
+      if (!itemRes.ok) throw new Error("Failed to link book to user's bookshelf.");
+      
+      console.log("Successfully added to Bookshelf!");
     } catch (err) {
       console.error("Failed to add book to bookshelf:", err);
     }
