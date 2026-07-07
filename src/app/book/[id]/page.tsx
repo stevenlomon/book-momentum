@@ -1,5 +1,6 @@
 import { getBookById } from '@/lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Just like in the Pokémon project, this is an async server component. Important to note here is that Next.js URL params are always 
 // string so we can't do `id: number` immediately in the rfc definition here. We need to parse the string to an int before
@@ -32,9 +33,13 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
         
         {/* Left Column: Cover Image */}
         <div className="w-full md:w-1/3 shrink-0">
-          <img
+          <Image
             src={book.cover_image || 'https://via.placeholder.com/400x600?text=No+Cover'}
             alt={`Cover of ${book.title}`}
+            width={400} 
+            height={600}
+            priority={true} 
+            unoptimized={true} // <-- ADD THIS LINE
             className="w-full h-auto rounded shadow-sm object-cover border border-[#E5E0D8]"
           />
         </div>
