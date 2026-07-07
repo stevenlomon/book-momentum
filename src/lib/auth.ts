@@ -6,7 +6,7 @@ import { pool } from '@/lib/db';
 export async function getCurrentUser() {
   try {
     // Grab the cookie with the "baked-in" JWT created by the Login Route Handler
-    const token = (await cookies()).get('book-momentum-session')?.value;
+    const token = (await cookies()).get('florilegium-session')?.value;
 
     if (!token) return null;
 

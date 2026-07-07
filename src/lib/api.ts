@@ -11,7 +11,7 @@ function getHeaders() {
   return {
     'Content-Type': 'application/json',
     // Identifying our app per Open Library's request for better rate limits
-    'User-Agent': 'BookMomentum/1.0 (steven.lennartsson@gmail.com)'
+    'User-Agent': 'Florilegium/1.0 (steven.lennartsson@gmail.com)'
   }
 };
 

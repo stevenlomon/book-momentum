@@ -21,7 +21,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Book Momentum',
+  title: 'Florilegium',
   description: 'Built with love by Steven :)',
 };
 

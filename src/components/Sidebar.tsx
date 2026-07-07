@@ -41,7 +41,7 @@ export default function Sidebar() {
         </div>
         
         <h1 className="font-heading text-2xl text-[#2C302E] tracking-wide mb-1">
-          Book Momentum
+          Florilegium
         </h1>
         <h2 className="font-sans text-[9px] font-bold uppercase tracking-[0.25em] text-[#5C613E]">
           DIGITAL RENAISSANCE BOOK GARDEN

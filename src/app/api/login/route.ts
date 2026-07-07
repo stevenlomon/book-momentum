@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         .sign(secret); // The actual signing of the secret as raw bytes
 
       // 3. Set the cookie in the user's browser with the JWT token "baked into it"
-      (await cookies()).set('book-momentum-session', token, {
+      (await cookies()).set('florilegium-session', token, {
         httpOnly: true, // This prevents JavaScript from reading our cookie (XSS attacks). Much safer than storing the token in localStorage which I would have done if I built a frontend for my Python backend. This also justifies the 7d expiration time vs 30 minutes
         secure: process.env.NODE_ENV === 'production', // Require HTTPS in production
         sameSite: 'lax', // CSRF protection. both express-session and Next.js defaults to 'lax' but it's good practice to write it explicitly so that the browser doesn't have to guess. 'lax' is the "sweet" middle spot between the two other options 'none' and 'strict'

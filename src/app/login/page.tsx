@@ -5,8 +5,8 @@ import LoginForm from './LoginForm';
 
 // Clean, static SEO metadata (which is only possible in Server Components)
 export const metadata = {
-  title: "Log In | Book Momentum",
-  description: "Access your Book Momentum account",
+  title: "Log In | Florilegium",
+  description: "Access your Florilegium account",
 };
 
 export default async function LoginPage() {
@@ -22,7 +22,7 @@ export default async function LoginPage() {
   return (
     <div className="bg-white border border-slate-200 p-8 rounded-lg shadow-sm max-w-md w-full">
       <h1 className="text-2xl font-bold text-center text-slate-800 mb-6">
-        Log In to Book Momentum
+        Log In to Florilegium
       </h1>
 
       {/* Our user interactive Client Component */}

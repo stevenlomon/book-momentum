@@ -20,7 +20,7 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
   return (
     <main className="min-h-screen p-8 max-w-5xl mx-auto">
       <Link href="/" className="inline-block mb-8 text-[#5C613E] hover:text-[#2C302E] font-sans text-sm transition-colors">
-        ← Return to Library
+        ← Return to Home Page
       </Link>
 
       <article className="flex flex-col md:flex-row gap-10 bg-white/50 border border-[#E5E0D8] p-8 rounded-lg shadow-sm">
