@@ -53,3 +53,23 @@ export const searchBooks = async (query: string, page = 1, limit = 20) => { // K
     }
   }
 };
+
+export const getBookById = async (id: number) => { // Id is a number in this API! Not a string
+  try {
+    const res = await fetch(`${BASE_URL}/books/${id}`, {
+      headers: getHeaders(),
+    });
+
+    if (!res.ok) throw new Error(`Gutenberg API returned status: ${res.status}`);
+    
+    return res.json();
+  } catch (err) {
+    console.error(`Server error fetching book details with id ${id} using getBookById:`, err);
+
+    if (err instanceof Error) { 
+      throw err; //
+    } else {
+      throw new Error("An unexpected network error occurred while contacting Gutenberg."); //
+    }
+  }
+};
