@@ -6,8 +6,25 @@ interface AddToBookshelfButtonProps {
 }
 
 export default function AddToBookshelfButton({ book }: AddToBookshelfButtonProps) {
-  function handleAddToBookshelf() {
-    // To be implemented
+  async function handleAddToBookshelf() {
+    console.log(`Preparing to save "${book.title}" to the database...`);
+
+    try {
+      // Upsert the book into our local Book table
+      const res = await fetch('/api/book', {
+        'method': 'POST',
+        'body': JSON.stringify({
+          "title": book.title,
+          "author": book.authors.map(a => a.name).join(', ') || 'Unknown Author', // Open Library gives us an object. Extract the names into a clean, comma-separated string
+          "external_provider": 'Open Library',
+          "external_id": book.id,
+          "page_count": book.page_count,
+          "cover_image_url": book.cover_image
+        })
+      });
+    } catch (err) {
+      console.error("Failed to add book to bookshelf:", err);
+    }
   }
 
   return (
