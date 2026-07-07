@@ -1,7 +1,11 @@
 ## ***Your Digital Renaissance Book Garden***
 *This app is built for those that want to rekindle that spark and love for reading they had as children and teenagers but lost somewhere along the way, as well as those that have a reading routine and want to sustain it with momentum to not lose it.*
 
-The building project name is Book Momentum but the final name is very subject to change.
+The building project name is Book Momentum but the final name is very subject to change.  
+EDIT jul 7: The name for now is _Florilegium_!  
+<img width="1891" height="823" alt="Screenshot_2026-07-07_17-53-36" src="https://github.com/user-attachments/assets/23c02e2e-04b3-4574-8d1b-9856b44df1ae" />
+<img width="1891" height="823" alt="Screenshot_2026-07-07_17-36-19" src="https://github.com/user-attachments/assets/9e11da40-af2d-4404-8e94-d3aa088cffb3" />
+
 
 I am patient zero. I have just gotten back into reading and I want to keep my momentum. I read an incredible amount as a kid. But I noticed a month ago that I had lost that love now as an adult in this fast-moving world. I'm building an app that I myself will use first and foremost and then I'll build it out with Friends and social features.
 
@@ -27,9 +31,9 @@ I want the app to highly encourage re-reading of the books in "My Bookshelf". He
 Quick note on having books makred as "Read" and rating them: 4.5 is now possible! One of my biggest gripes with Goodreads is that I can't rate books 4.5 and 3.5 haha!
 
 ### **Some of the technical stuff**
-The project is built using Next.js, TypeScript and TailwindCSS.
-The external API for all book data is Gutenberg API: https://gutenbergapi.com/
-Gutenberg acts as the massive library and the main source of book data. But when a user wants to add a book to their User Bookshelf, we create a "local copy" to our own Book table with only the essential data for the app to function for faster look-ups now that we've confirmed this is a relevant book to the users. 
+The project is built using Next.js, TypeScript and TailwindCSS.  
+The external API for all book data started as Gutenberg API: https://gutenbergapi.com/, but every single image took at least 5-6 seconds to load so 2 days in I switched to Open Library's API: https://openlibrary.org/developers/api. The images load way faster now! But the biggest downside by far is the inconsistency in their data and data shapes which means that there's been a lot of vibe coding just to get in a predictable TypeScript interface shape.  
+Open Library acts as the massive library and the main source of book data. But when a user wants to add a book to their User Bookshelf, we create a "local copy" to our own Book table with only the essential data for the app to function for faster look-ups now that we've confirmed this is a relevant book to the users. 
 
 <img width="949" height="951" alt="BookMomentum drawio" src="https://github.com/user-attachments/assets/bc62b82d-6029-41b0-82dd-f44ca5628513" />
 
