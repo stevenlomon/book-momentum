@@ -62,6 +62,7 @@ export default function HorizonModal({ isOpen, onClose, targetSlot, onSuccess }:
     try {
       if (source === 'UserBookshelf') {
         const userBookshelfItem = book as UserBookshelfItem // Type Assertion to calm TS down haha
+        console.log(`[Database Action] Assigning user bookshelf item ${userBookshelfItem.bookshelf_item_id} to Horizon Slot ${targetSlot}`);
         
         const res = await fetch('/api/bookshelf', {
           method: 'PATCH',
@@ -80,7 +81,37 @@ export default function HorizonModal({ isOpen, onClose, targetSlot, onSuccess }:
       } else {
         const openLibraryBook = book as Book
         console.log(`[Database Action] Saving "${openLibraryBook.title}" to DB, then assigning to Horizon Slot ${targetSlot}`);
-        // UPSERT -> INSERT fetch requests here
+        
+        // First we upsert the book into our local Book table
+        const bookRes = await fetch('/api/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: openLibraryBook.title,
+            author: openLibraryBook.authors?.[0]?.name || 'Unknown Author',
+            external_provider: 'open_library',
+            external_id: openLibraryBook.id,
+            page_count: openLibraryBook.page_count || null,
+            cover_image_url: openLibraryBook.cover_image || null,
+          })
+        });
+
+        if (!bookRes.ok) throw new Error("Failed to save book to local database");
+        const bookData = await bookRes.json();
+        const localBookId = bookData.data.id; // We grab the new Postgres ID!
+
+        // Now, we insert it into the user's Bookshelf and assign the Horizon slot
+        const bookshelfRes = await fetch('/api/bookshelf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            book_id: localBookId,
+            status_id: 1, // Defaulting Horizon books as 1:"Want to Read" for now
+            horizon_slot: targetSlot // Passing the slot along! And this will need a change in the Route Handler
+          })
+        });
+
+        if (!bookshelfRes.ok) throw new Error(`Failed to assign book to Slot ${targetSlot}`);
       }
 
       onSuccess();

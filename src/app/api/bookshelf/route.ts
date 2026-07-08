@@ -13,13 +13,16 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // The server provides all data except added_at that Postgres can automatically generate
-    // When creating and inserting a bookshelf item, we omit horizon_slot, peak_slot and user_rating; these are updated in a separate fetch
+    // When creating and inserting a bookshelf item, we omit peak_slot and user_rating; these are updated in a separate fetch
     const itemId = crypto.randomUUID();
+
+    // We now expect that this can contain horizon_slot but also need to be prepared that it might be undefined!
+    const { book_id, status_id, horizon_slot = null } = body; // horizon_slot defaults to null
 
     const query = {
       name: 'insert-user-bookshelf-item',
-      text: 'INSERT INTO "Bookshelf_Item"(id, user_id, book_id, status_id) VALUES($1, $2, $3, $4) RETURNING *',
-      values: [itemId, user.id, body.book_id, body.status_id]
+      text: 'INSERT INTO "Bookshelf_Item"(id, user_id, book_id, status_id, horizon_slot) VALUES($1, $2, $3, $4, $5) RETURNING *',
+      values: [itemId, user.id, book_id, status_id, horizon_slot]
     }
     const res = await pool.query(query);
     const item = res.rows[0];
