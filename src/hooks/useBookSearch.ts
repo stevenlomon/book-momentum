@@ -21,6 +21,10 @@ export function useBookSearch(errorLogPrefix = "Book search error:") {
       return;
     }
 
+    // Handle local state. Moved here to prevent "No works found" flicked
+    setIsSearching(true);
+    setError(null);
+
     // Clear previous timeout if user is still typing quickly
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -28,15 +32,11 @@ export function useBookSearch(errorLogPrefix = "Book search error:") {
 
     // If the user stops typing for 500ms, this runs
     timeoutRef.current = setTimeout(async () => {
-      // Handle local state
-      setIsSearching(true);
-      setError(null);
-
       // Do the fetching business via our Proxy Route Handler
       try {
         // We want our API key securely on our server, never in the Browser. We don't use searchBooks directly here
         const res = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`); // Upgraded to using encodeURIComponent here. For example, if a user searched for "pride & prejudice", it becomes "pride%20%26%20prejudice" and not break the URL
-        
+
         if (!res.ok) {
           throw new Error(`Proxy route returned status code: ${res.status}`);
         }
@@ -54,7 +54,7 @@ export function useBookSearch(errorLogPrefix = "Book search error:") {
 
     // And then the important cleanup. If the user types again before 500ms, this kills the previous timer
     return () => {
-      if (timeoutRef.current) { 
+      if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
