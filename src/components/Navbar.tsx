@@ -1,67 +1,39 @@
 'use client' // Client component since we need to use `useState`, `useEffect`, etc etc
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; // This replaces useNavigate
-import type { Author, Book, OpenLibrarySearchResponse } from '@/lib/types';
+import { useBookSearch } from '@/hooks/useBookSearch';
 
 export default function Navbar() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [previews, setPreviews] = useState<Book[]>([]); // Array of our type Book
+  // With the hook now, the only local state the Navbar needs to manage itself is whether its own dropdown is visible
   const [isOpen, setIsOpen] = useState(false);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // For the debouncing
+  // Our hook variables! `results` gets the alias `previews` here in the Navbar
+  const { searchTerm, setSearchTerm, isSearching, results: previews } = useBookSearch("Navbar Search Error:");
+
   const router = useRouter();
-
-  // Our useEffect to achieve debouncing. Completely untouched compared to the Pokémon project!
-  useEffect(() => {
-    // Don't navigate to a search result page for an empty string AND also ensure we don't fire on strings shorter than 3 characters
-    if (searchTerm.trim().length < 3) {
-      setIsOpen(false);
-      setPreviews([]);
-      return;
-    }
-
-    // If the user stops typing for 500ms, this runs
-    timeoutRef.current = setTimeout(async () => {
-      // Handle local state
-      setIsSearching(true);
-      setIsOpen(true);
-
-      // Do the fetching business via our Proxy Route Handler
-      try {
-        // We want our API key securely on our server, never in the Browser. We don't use searchBooks directly here
-        const res = await fetch(`/api/search?q=${searchTerm}`); 
-        if (!res.ok) throw new Error("Network response was not ok.");
-
-        const data = await res.json();
-        setPreviews(data.results || []);
-      } catch (err) {
-        console.error("Preview fetch failed", err);
-        setPreviews([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 500);
-
-    // And then the important cleanup. If the user types again before 500ms, this kills the previous timer
-    return () => {
-      if (timeoutRef.current) { 
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [searchTerm]); // Run every time there is a change in the searchTerm state variable
 
   // We still need a form submission function; now typed
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) { //FormEvent, not SubmitEvent. React.FormEvent is *not* deprecated.
     e.preventDefault();
 
     if (!searchTerm.trim()) return; // Return early if there is no search term
-    if (timeoutRef.current) clearTimeout(timeoutRef.current); //
+    // if (timeoutRef.current) clearTimeout(timeoutRef.current); // Not needed here anymore
 
     setIsOpen(false); // Local state management to prevent the curtains from staying open when we return
-    router.push(`/search?q=${searchTerm}`);
+    router.push(`/search?q=${encodeURIComponent(searchTerm)}`); // Also upgraded to use encodeURIComponent, see comment in useBookSearch
+  };
+
+  // A new handler specifically for when the user types in the input box; this is the one that handles setIsOpen now, not the useEffect
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    // If they type enough characters, immediately open the dropdown
+    if (e.target.value.trim().length >= 3) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
   };
 
   // Vibe coded render block modeling the Pokémon project and styling for now
@@ -83,7 +55,7 @@ export default function Navbar() {
             type="text"
             placeholder="Search library..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleInputChange} // Not `(e) => setSearchTerm(e.target.value)` anymore, but our new handler
           />
           {/* Hidden submit button to allow Enter key to work */}
           <button type="submit" className="sr-only">Search</button>
@@ -129,7 +101,7 @@ export default function Navbar() {
                 {/* The "See all results" footer */}
                 <li className="bg-[#EFEBE1]/50 text-center">
                   <Link
-                    href={`/search?q=${searchTerm}`}
+                    href={`/search?q=${encodeURIComponent(searchTerm)}`} // And here to! Upgraded to use encodeURIComponent, see comment in useBookSearch
                     onClick={() => setIsOpen(false)}
                     className="block p-3 font-sans text-sm font-medium text-[#424B2E] transition-colors hover:bg-[#E5E0D8]"
                   >

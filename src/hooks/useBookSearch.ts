@@ -1,0 +1,70 @@
+import { useState, useEffect, useRef } from 'react';
+import type { Book } from '@/lib/types';
+
+// The logic and useEffect for searching books is modularized since it will be used in a modal when picking Horizon books, not
+// only in the Navbar. The use of Custom Hooks just clicked for me!
+export function useBookSearch(errorLogPrefix = "Book search error:") {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<Book[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // For the debouncing
+
+  // Our useEffect to achieve debouncing. Mostly untouched compared to the Pokémon project, and now the core of a custom hook!
+  useEffect(() => {
+    // If the input is empty or too short, reset state and prevent fetching
+    if (searchTerm.trim().length < 3) {
+      setResults([]);
+      setIsSearching(false);
+      setError(null);
+      return;
+    }
+
+    // Clear previous timeout if user is still typing quickly
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // If the user stops typing for 500ms, this runs
+    timeoutRef.current = setTimeout(async () => {
+      // Handle local state
+      setIsSearching(true);
+      setError(null);
+
+      // Do the fetching business via our Proxy Route Handler
+      try {
+        // We want our API key securely on our server, never in the Browser. We don't use searchBooks directly here
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`); // Upgraded to using encodeURIComponent here. For example, if a user searched for "pride & prejudice", it becomes "pride%20%26%20prejudice" and not break the URL
+        
+        if (!res.ok) {
+          throw new Error(`Proxy route returned status code: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setResults(data.results || []);
+      } catch (err) {
+        console.error(errorLogPrefix, err);
+        setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+        setResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    // And then the important cleanup. If the user types again before 500ms, this kills the previous timer
+    return () => {
+      if (timeoutRef.current) { 
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [searchTerm, errorLogPrefix]); // Run every time there is a change in the searchTerm state variable. Now also errorLogPrefix since it makes an appearance
+
+  return {
+    searchTerm,
+    setSearchTerm,
+    isSearching,
+    results,
+    error,
+  }
+};
