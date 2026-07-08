@@ -1,7 +1,7 @@
 // The Profile Page is a Server component! No `useEffect` and no `useState`! All handled on the server by the server
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import HorizonSection from '@/components/HorizonSection';
+import HorizonSection from '@/components/profile/HorizonSection';
 
 export default async function ProfilePage() {
   // The Server Side user check, which runs before the browser even sees the page! 
