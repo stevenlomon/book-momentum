@@ -30,14 +30,29 @@ export default function ReadingTracksSection() {
   const [trackBooks, setTrackBooks] = useState<TrackBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchReadingTracks = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/tracks'); 
+      if (res.ok) {
+        const data = await res.json();
+        setTrackBooks(data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching reading tracks:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setIsLoading(false);
-    // Fetch logic will go here
+    fetchReadingTracks();
   }, []);
 
   const refreshReadingTracks = () => {
-    // To be implemented
-  }
+    console.log("Refreshing Reading Tracks UI...");
+    fetchReadingTracks();
+  };
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8] -mx-4 xl:mx-0">

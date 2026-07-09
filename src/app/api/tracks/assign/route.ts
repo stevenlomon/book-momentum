@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       let dbTrackName = '';
       if (track_id === 'fiction') dbTrackName = 'Fiction';
       if (track_id === 'non-fiction') dbTrackName = 'Non-fiction';
-      if (track_id === 'bedtime') dbTrackName = 'Before Bedtime';
+      if (track_id === 'before-bedtime') dbTrackName = 'Before Bedtime';
 
       const trackRes = await client.query('SELECT id FROM "Reading_Track" WHERE user_id = $1 AND name = $2', [user.id, dbTrackName]);
 
