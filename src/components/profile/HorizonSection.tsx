@@ -16,7 +16,7 @@ export default function HorizonSection() {
   const fetchHorizonBooks = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/bookshelf');
+      const res = await fetch('/api/bookshelf/horizon'); // New Route Handler location!
       if (res.ok) {
         const data = await res.json();
         // The API returns all active Horizon books. We just save them to our local state
