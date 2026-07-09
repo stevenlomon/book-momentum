@@ -21,6 +21,10 @@ const TRACKS = [
 ];
 
 export default function ReadingTracksSection() {
+  // In the Horizon Book section, we had a single 5-column row. Now we have a two-dimensional grid; the track and the slot. trackId comes from 
+  // TRACKS, "Currently Reading" has slotId 1 and "Follow-up" has slotId 2. It starts as null meaning if it's null, the modal is closed. The 
+  // alternative would be three or six separate states which sounds like an absolute nightmare to maintain. A single active modal context allows
+  // us to render exactly one ReadingTrackModal at the bottom of the page! activeModalContext it is haha!
   const [activeModalContext, setActiveModalContext] = useState<{ trackId: string, slotId: number } | null>(null);
   const [trackBooks, setTrackBooks] = useState<TrackBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
