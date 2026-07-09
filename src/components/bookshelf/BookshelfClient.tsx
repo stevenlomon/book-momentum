@@ -29,9 +29,15 @@ const TABS = [
 ];
 
 export default function BookshelfClient({ initialBooks }: BookshelfClientProps) {
-  const [books, setBooks] = useState<BookshelfItem[]>(initialBooks); // The master client-side state
   const [activeTab, setActiveTab] = useState('all'); // Defaults to 'all', is set to '1', '2', '3', or '4' by the Filtering button onClick
-  const [selectedBook, setSelectedBook] = useState<BookshelfItem | null>(null); // New state for the modal!
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null); // Updated to just store the Id and not the entire object. See why below
+
+  // In order to have router.refresh() work properly as intended in the modal, it serves us more to *not* have `books` be a state variable!
+  const books = initialBooks;
+
+  // Derive the actual book object on the fly! When router.refresh() brings in new data, this automatically finds the fresh version
+  // Essentially another change to have router.refresh() work properly as intended in the model haha!
+  const selectedBook = books.find(b => b.bookshelf_item_id === selectedBookId) || null;
 
   // Filter books based on the active tab. What is ultimately rendered in the return render statement is not `books`, but this filtered
   // `filteredBooks` array!
@@ -54,8 +60,8 @@ export default function BookshelfClient({ initialBooks }: BookshelfClientProps) 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)} // The crucial and essential onClick!
             className={`px-4 py-2 rounded-full text-sm font-sans transition-all ${activeTab === tab.id
-                ? 'bg-[#424B2E] text-white shadow-sm'
-                : 'bg-white/50 text-[#5C613E] hover:bg-[#EFEBE1]'
+              ? 'bg-[#424B2E] text-white shadow-sm'
+              : 'bg-white/50 text-[#5C613E] hover:bg-[#EFEBE1]'
               }`}
           >
             {tab.label}
@@ -69,7 +75,7 @@ export default function BookshelfClient({ initialBooks }: BookshelfClientProps) 
           <div
             key={book.bookshelf_item_id}
             className="flex flex-col gap-3 group cursor-pointer"
-            onClick={() => setSelectedBook(book)}
+            onClick={() => setSelectedBookId(book.bookshelf_item_id)} // Now takes the Id, not the entire object
           >
             {/* Cover */}
             <div className="relative aspect-2/3 rounded-md overflow-hidden border border-[#E5E0D8] hover:border-[#5C613E] hover:shadow-lg transition-all shadow-sm bg-[#FCF9F2]">
@@ -116,10 +122,10 @@ export default function BookshelfClient({ initialBooks }: BookshelfClientProps) 
         )}
       </div>
 
-    {/* The new modal at the very end of the return render statement */}
+      {/* The new modal at the very end of the return render statement */}
       <BookDetailsModal
         isOpen={!!selectedBook} // Only open if there IS selectedBook. The double `!!`, called "Double Bang" is essentially a neat shorthand in this scenario of writing `isOpen={selectedBook !== null ? true : false}`
-        onClose={() => setSelectedBook(null)}
+        onClose={() => setSelectedBookId(null)}
         book={selectedBook}
       />
     </div>

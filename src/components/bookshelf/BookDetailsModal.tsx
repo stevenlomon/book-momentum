@@ -1,7 +1,9 @@
 'use client'
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import type { BookshelfItem } from './BookshelfClient';
+import StarRating from './StarRating';
 
 interface BookDetailsModalProps {
   isOpen: boolean;
@@ -11,6 +13,30 @@ interface BookDetailsModalProps {
 
 export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsModalProps) {
   if (!isOpen || !book) return null;
+
+  const router = useRouter(); // For router.refresh()!
+
+  // The function to talk to our newly created user rating PATCH route
+  const handleRatingUpdate = async (newRating: number | null) => {
+    try {
+      const res = await fetch('/api/bookshelf', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookshelf_item_id: book.bookshelf_item_id,
+          user_rating: newRating
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to update rating");
+      
+      // Tell Next.js to re-fetch the server component data so that the grid updates instantly!
+      router.refresh(); 
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save rating. Please try again.");
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2C302E]/40 backdrop-blur-sm p-4">
@@ -40,9 +66,9 @@ export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsM
                 [Status Dropdown Placeholder]
               </div>
 
-              {/* RATING PLACEHOLDER */}
-              <div className="px-4 py-2 border-2 border-dashed border-[#E5E0D8] rounded-md text-xs font-sans font-medium text-[#5C613E] bg-[#EFEBE1]/30">
-                [Rating Stars Placeholder]
+              {/* USER RATINGS COMPONENT */}
+              <div className="pl-4 border-l border-[#E5E0D8]">
+                <StarRating initialRating={book.user_rating} onRate={handleRatingUpdate} />
               </div>
             </div>
           </div>
