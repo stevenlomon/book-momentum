@@ -4,7 +4,7 @@ import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 // GET endpoint to fetch a user's entire bookshelf
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -89,6 +89,7 @@ export async function POST(req: Request) {
 // The Route Handler to be called when assigning a rating to a Bookshelf Item. Completely decoupled from status; no requirement that 
 // the book needs to be marked "Read" in order to rate it. It would cause more frustration overall that appreciation!
 // Now also handles read status updates! Which re-wires the logic of the route handler slightly to be more flexible and dynamic
+// Now also upadtes custom page count, the new row in the table!
 export async function PATCH(req: Request) {
   try {
     const user = await getCurrentUser();
@@ -97,7 +98,7 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { bookshelf_item_id, user_rating, status_id } = body; // Now also takes status!
+    const { bookshelf_item_id, user_rating, status_id, custom_page_count } = body; // Now also takes status! And custom_page_count, the new table row!
 
     // This is now the only element in the payload that is truly required that we check before anythign else
     if (!bookshelf_item_id) {
@@ -278,6 +279,45 @@ export async function PATCH(req: Request) {
         if (res.rowCount === 0) return NextResponse.json({ error: "Item not found" }, { status: 404 });
         return NextResponse.json({ success: "ok", data: res.rows[0] });
       }
+    }
+
+    // The new custom_page_count is a simple PATCH, less like read status and more like user rating but even simpler
+    if (custom_page_count !== undefined) {
+      // Once again; Golden Rule of Web Dev: Never trust the client. We want to trust our users! We genuinely do. But if they have intentions of
+      // breaking the app or are just fuckin around testing edge cases with negative numbers of obscenely large ones, we genly bring them back to earth
+      if (custom_page_count !== null) { // We know now that it's not undefined, final check to ensure it's not null
+        if (custom_page_count < 1 || custom_page_count > 5000) {
+          return NextResponse.json({
+            error: "Custom page count must be an integer between 1 to 5000 (even À la recherche du temps perdu is only ~2400!)"
+          }, { status: 400 });
+        }
+      }
+
+      const query = {
+        name: 'update-custom-page-count',
+        text: `
+        UPDATE "Bookshelf_Item" 
+        SET custom_page_count = $1 
+        WHERE id = $2 AND user_id = $3 
+        RETURNING *
+      `,
+        values: [custom_page_count, bookshelf_item_id, user.id]
+      };
+
+      const res = await pool.query(query);
+      const updatedCustomPageCount = res.rows[0];
+
+      // If rowCount is 0, it means the item didn't exist OR it didn't belong to this user
+      if (res.rowCount === 0) {
+        return NextResponse.json({ error: "Item not found or unauthorized" }, { status: 404 });
+      }
+
+      console.log(`Successfully updated custom page count for Bookshelf_Item with id ${bookshelf_item_id} to:`, updatedCustomPageCount);
+
+      return NextResponse.json({
+        success: "ok",
+        data: updatedCustomPageCount
+      });
     }
 
     // And for this "gatekeeper" logic to fully work, we need a fallback in case the payload doesn't acutally contain a valid
