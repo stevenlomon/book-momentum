@@ -16,6 +16,9 @@ export interface TrackBook {
   title: string;
   author: string;
   cover_image_url: string | null;
+  custom_page_count?: number | null; // The new user entered custom page count!
+  page_count?: number | null; // The API ballpark fallback
+  current_page?: number | null; // From the Reading_Journey table
 }
 
 const TRACKS = [
@@ -155,12 +158,30 @@ export default function ReadingTracksSection() {
                       {isCurrentlyReading && (
                         <div className="absolute inset-0 bg-[#2C302E]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 rounded-md pointer-events-none">
 
-                          {/* Progress Tracker (Placeholder with hardcoded pages for now) */}
+                          {/* Progress Tracker, now with real data! */}
                           <div className="mb-5 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 w-full">
-                            <span className="text-[#FCF9F2] font-sans text-[10px] uppercase tracking-widest font-medium">Page 180 / 320</span>
-                            <div className="w-full h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
-                              <div className="h-full bg-[#EFEBE1] w-[56%] rounded-full"></div>
-                            </div>
+                            {(() => {
+                              // 1. Get current page (default to 0 if they haven't logged yet)
+                              const current = assignedBook.current_page || 0;
+                              // 2. Get total pages (prioritize their custom input, fallback to API estimate)
+                              const total = assignedBook.custom_page_count || assignedBook.page_count || 0;
+                              // 3. Calculate percentage for the bar width (capped at 100%)
+                              const percentage = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+
+                              return (
+                                <>
+                                  <span className="text-[#FCF9F2] font-sans text-[10px] uppercase tracking-widest font-medium">
+                                    Page {current} / {total > 0 ? total : '?'}
+                                  </span>
+                                  <div className="w-full h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
+                                    <div
+                                      className="h-full bg-[#EFEBE1] rounded-full transition-all duration-1000 ease-out"
+                                      style={{ width: `${percentage}%` }}
+                                    ></div>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
 
                           {/* Finish Button */}
