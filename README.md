@@ -4,7 +4,11 @@
 The building project name is Book Momentum but the final name is very subject to change.  
 EDIT jul 7: The name for now is _Florilegium_!  
 <img width="1891" height="823" alt="Screenshot_2026-07-07_17-53-36" src="https://github.com/user-attachments/assets/23c02e2e-04b3-4574-8d1b-9856b44df1ae" />
-<img width="1891" height="823" alt="Screenshot_2026-07-07_17-36-19" src="https://github.com/user-attachments/assets/9e11da40-af2d-4404-8e94-d3aa088cffb3" />
+<img width="1884" height="818" alt="Screenshot_2026-07-10_11-13-15" src="https://github.com/user-attachments/assets/7d1e5227-2167-4d42-bdff-2518a7ba9070" />
+<img width="1884" height="818" alt="Screenshot_2026-07-10_11-07-26" src="https://github.com/user-attachments/assets/df50ec41-c1fe-40ff-b023-94c0cf64a43b" />
+<img width="1884" height="818" alt="Screenshot_2026-07-10_11-04-36" src="https://github.com/user-attachments/assets/71d01c7b-1fcd-4ca5-b67a-7717b57b8628" />
+<img width="1884" height="818" alt="Screenshot_2026-07-10_11-18-26" src="https://github.com/user-attachments/assets/9e976f02-a0fd-47fa-98cf-a767ceef51e6" />
+<img width="1884" height="818" alt="Screenshot_2026-07-10_11-18-34" src="https://github.com/user-attachments/assets/439cdb0a-371a-4f96-adc7-ece21a0e6e9b" />
 
 
 I am patient zero. I have just gotten back into reading and I want to keep my momentum. I read an incredible amount as a kid. But I noticed a month ago that I had lost that love now as an adult in this fast-moving world. I'm building an app that I myself will use first and foremost and then I'll build it out with Friends and social features.
