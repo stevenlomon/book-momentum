@@ -17,6 +17,9 @@ export async function GET(_req: Request) { // We accept req just in case we need
       // `AND bi.status_id IN (1, 2)` This is specific to only this Horizon fetch query
       // `ORDER BY bi.added_at DESC` Golden rule of backend engineering: Leverage the power of the database! Always let Postgres that is written
       // in ultra-optimized C do sorting and filtering. It does it faster than any JavaScript we can possibly write haha
+      // UPDATE: Speaking of ultra-optimized C haha; now we have Postgres do C-level filtering to ensure horizon_slot is not null before it
+      // hands us the payload! I noticed that we get a bunch of books in the User Bookshelf where horizon slot is null when doing this fetch
+      // which is really unnecessary!
       text: `
         SELECT 
           bi.id AS bookshelf_item_id, 
@@ -31,6 +34,7 @@ export async function GET(_req: Request) { // We accept req just in case we need
         JOIN "Book" b ON bi.book_id = b.id
         WHERE bi.user_id = $1 
           AND bi.status_id IN (1, 2) 
+          AND bi.horizon_slot IS NOT NULL
         ORDER BY bi.added_at DESC
       `,
       values: [user.id]
