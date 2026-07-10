@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import ReadingTracksModal from './ReadingTracksModal';
+import CelebrationModal from './CelebrationModal';
 
 export interface TrackBook {
   track_id: string;
@@ -31,6 +33,11 @@ export default function ReadingTracksSection() {
   const [trackBooks, setTrackBooks] = useState<TrackBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // New Celebration state variables
+  const [isFinishingId, setIsFinishingId] = useState<string | null>(null);
+  const [celebrationPayload, setCelebrationPayload] = useState<{ bookTitle: string, promotion: any } | null>(null);
+  const router = useRouter(); // For router.refresh()
+
   const fetchReadingTracks = async () => {
     setIsLoading(true);
     try {
@@ -53,6 +60,47 @@ export default function ReadingTracksSection() {
   const refreshReadingTracks = () => {
     console.log("Refreshing Reading Tracks UI...");
     fetchReadingTracks();
+  };
+
+  const handleFinishBook = async (e: React.MouseEvent, bookshelfItemId: string, bookTitle: string) => {
+    e.preventDefault();
+    e.stopPropagation(); // Completely new to me, first time seeing! It's used here to prevent Event Bubbling and any unwanted side effects from the click. The click is contained strictly to the "Finish" button so that we can be in control when we show the modal
+
+    if (isFinishingId) return; // To prevent double clicks
+    setIsFinishingId(bookshelfItemId);
+
+    try {
+      const res = await fetch('/api/bookshelf', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookshelf_item_id: bookshelfItemId,
+          status_id: 3 // 3 = "Read" which will trigger the Librarian Transaction!
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to finish book");
+
+      const data = await res.json();
+
+      if (data.promotion) {
+        // Intercept the payload!! In order to show our new modal
+        setCelebrationPayload({ bookTitle, promotion: data.promotion });
+      } else {
+        // Fallback just in case
+        router.refresh();
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to finish book. Please try again.");
+    } finally {
+      setIsFinishingId(null);
+    }
+  };
+
+  const handleCloseCelebration = () => {
+    setCelebrationPayload(null);
+    router.refresh(); // Refresh the grid to show the newly promoted book!
   };
 
   return (
@@ -79,8 +127,8 @@ export default function ReadingTracksSection() {
                 return (
                   <div key={`${track.id}-${slot}`} className="flex flex-col gap-3 relative">
                     <div className={`group relative block aspect-2/3 rounded-md border border-[#E5E0D8] bg-[#FCF9F2] shadow-sm ${isCurrentlyReading
-                        ? 'cursor-default origin-bottom transition-all duration-300 hover:scale-112 hover:z-50 hover:shadow-2xl'
-                        : 'hover:border-[#5C613E] hover:shadow-md transition-all'
+                      ? 'cursor-default origin-bottom transition-all duration-300 hover:scale-112 hover:z-50 hover:shadow-2xl'
+                      : 'hover:border-[#5C613E] hover:shadow-md transition-all'
                       }`}>
 
                       {/* COVER IMAGE */}
@@ -116,14 +164,14 @@ export default function ReadingTracksSection() {
 
                           {/* Finish Button */}
                           <button
-                            onClick={(e) => {
-                              e.preventDefault(); // Prevents the Link behind it from navigating!
-                              e.stopPropagation();
-                              alert("Trigger Librarian Transaction for: " + assignedBook.bookshelf_item_id);
-                            }}
-                            className="pointer-events-auto bg-[#EFEBE1] text-[#2C302E] px-4 py-2.5 rounded text-xs w-full font-sans font-bold uppercase tracking-wider shadow-sm hover:bg-white hover:scale-105 transition-all transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75"
+                            onClick={(e) => handleFinishBook(e, assignedBook.bookshelf_item_id, assignedBook.title)}
+                            disabled={isFinishingId === assignedBook.bookshelf_item_id}
+                            className={`pointer-events-auto bg-[#EFEBE1] text-[#2C302E] px-4 py-2.5 rounded text-xs w-full font-sans font-bold uppercase tracking-wider shadow-sm transition-all transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75 ${isFinishingId === assignedBook.bookshelf_item_id
+                              ? 'opacity-70 cursor-wait'
+                              : 'hover:bg-white hover:scale-105'
+                              }`}
                           >
-                            Finish Book
+                            {isFinishingId === assignedBook.bookshelf_item_id ? 'Finishing...' : 'Finish Book'}
                           </button>
                         </div>
                       )}
@@ -165,6 +213,15 @@ export default function ReadingTracksSection() {
             targetSlot={activeModalContext}
             onSuccess={refreshReadingTracks}
           />
+
+          { /* The new Celebration Modal! */}
+          {celebrationPayload && (
+            <CelebrationModal
+              bookTitle={celebrationPayload.bookTitle}
+              promotion={celebrationPayload.promotion}
+              onClose={handleCloseCelebration}
+            />
+          )}
 
         </section>
       ))}
