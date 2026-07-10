@@ -147,26 +147,139 @@ export async function PATCH(req: Request) {
 
     // ..and one for the new code that updates the read status!
     if (status_id !== undefined) {
-      const query = {
-        name: 'update-status-id',
-        text: `
+      // Check if it is specifically being marked as 3:"Read" which will guaranteed update the Reading Journey but also potentially
+      // the UX I look forward to the most if it was the Currently Read in a Reading Track upon which there will be the "promotion"!
+      if (status_id === 3) {
+        // Grab a dedicated clietn from the pool for the transaction that's about to happen. This is another chonky one haha!
+        const client = await pool.connect();
+
+        try {
+          await client.query('BEGIN');
+
+          // Before anything, actually update the status of the current book to "Read"
+          const updateRes = await client.query(
+            'UPDATE "Bookshelf_Item" SET status_id = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+            [status_id, bookshelf_item_id, user.id]
+          );
+
+          if (updateRes.rowCount === 0) {
+            throw new Error("ItemNotOwned");
+          }
+
+          // *The important and exciting check: Is the book currently active ("Currently Reading") in a Reading Track?*
+          let trackTitle = null;
+          let promotedBookTitle = null;
+          const trackCheckRes = await client.query(`
+            SELECT rt.id AS track_id, rt.name AS track_name, rt.follow_up_book_id, rj.id AS journey_id
+            FROM "Reading_Track" rt
+            JOIN "Reading_Journey" rj ON rt.reading_journey_id = rj.id
+            WHERE rj.bookshelf_item_id = $1 AND rt.user_id = $2 AND rj.finished_at IS NULL
+          `, [bookshelf_item_id, user.id]);
+
+          if ((trackCheckRes.rowCount ?? 0) > 0) {
+            // If it is; first of all, close the connected Reading Journey with timestamp finished_at = NOW()
+            const track = trackCheckRes.rows[0];
+            await client.query(
+              'UPDATE "Reading_Journey" SET finished_at = NOW() WHERE id = $1',
+              [track.journey_id]
+            );
+
+            // Is there a Follow-up in that same Reading Track?
+            if (track.follow_up_book_id) {
+              // If it is: Promote it!! 🌿 Mark it as 2:"Currently Reading"
+              await client.query(
+                'UPDATE "Bookshelf_Item" SET status_id = 2 WHERE id = $1 AND user_id = $2',
+                [track.follow_up_book_id, user.id]
+              );
+
+              // Calculate the iteration for the book that is to be promoted (First read? Second? Third?)
+              const iterRes = await client.query(
+                'SELECT COUNT(*) FROM "Reading_Journey" WHERE bookshelf_item_id = $1',
+                [track.follow_up_book_id]
+              );
+              const nextIteration = parseInt(iterRes.rows[0].count, 10) + 1;
+
+              // Create a brand new Reading Journey for the book-to-be-promoted. current_page defaults to 0. Might change this and actually prompt the user to enter "What page?" but 0 for now
+              const newJourneyId = crypto.randomUUID();
+              await client.query(
+                'INSERT INTO "Reading_Journey" (id, current_page, bookshelf_item_id, iteration) VALUES ($1, 0, $2, $3)',
+                [newJourneyId, track.follow_up_book_id, nextIteration]
+              );
+
+              // Promote ti and update the track! Slot the new journey in, and empty out the follow-up slot 🌿
+              await client.query(
+                'UPDATE "Reading_Track" SET reading_journey_id = $1, follow_up_book_id = NULL WHERE id = $2',
+                [newJourneyId, track.track_id]
+              );
+
+              // Grab the actual string title of the promoted book to show in the UI
+              const titleRes = await client.query(`
+                SELECT b.title FROM "Bookshelf_Item" bi
+                JOIN "Book" b ON bi.book_id = b.id WHERE bi.id = $1
+              `, [track.follow_up_book_id]);
+
+              if ((titleRes.rowCount ?? 0) > 0) {
+                promotedBookTitle = titleRes.rows[0].title;
+                trackTitle = track.track_name;
+              }
+            } else {
+              // If there was no follow-up, we still need to clear the active journey from the track
+              await client.query(
+                'UPDATE "Reading_Track" SET reading_journey_id = NULL WHERE id = $1',
+                [track.track_id]
+              );
+              trackTitle = track.track_name; // We still pass the track name so the UI can say something like "Assign a new book to Fiction!"
+            }
+          }
+
+          // If we reach this point of the code, it's safe to commit!
+          await client.query('COMMIT');
+
+          // Respond with a special payload!
+          return NextResponse.json({
+            success: "ok",
+            data: updateRes.rows[0],
+            promotion: trackTitle ? { // Only attach promotion data if a track was actually affected
+              promotedBook: promotedBookTitle,
+              trackName: trackTitle
+            } : null
+          });
+
+        } catch (dbError) {
+          await client.query('ROLLBACK');
+          // Check if it's an Error object before checking its message
+          if (dbError instanceof Error && dbError.message === "ItemNotOwned") {
+            return NextResponse.json({ error: "Item not found" }, { status: 404 });
+          }
+          console.error("Reading Track Promotion Transaction Failed:", dbError);
+          throw dbError;
+        } finally {
+          client.release(); // We always release the dedicated client no matter the outcome
+        }
+
+      } else {
+        // Else, we fall back to what we already had. Standard read status update
+        const query = {
+          name: 'update-status-id',
+          text: `
           UPDATE "Bookshelf_Item" 
           SET status_id = $1 
           WHERE id = $2 AND user_id = $3 
           RETURNING *
         `,
-        values: [status_id, bookshelf_item_id, user.id]
-      };
+          values: [status_id, bookshelf_item_id, user.id]
+        };
 
-      const res = await pool.query(query);
-      if (res.rowCount === 0) return NextResponse.json({ error: "Item not found" }, { status: 404 });
-      return NextResponse.json({ success: "ok", data: res.rows[0] });
+        const res = await pool.query(query);
+        if (res.rowCount === 0) return NextResponse.json({ error: "Item not found" }, { status: 404 });
+        return NextResponse.json({ success: "ok", data: res.rows[0] });
+      }
     }
 
     // And for this "gatekeeper" logic to fully work, we need a fallback in case the payload doesn't acutally contain a valid
     // user rating, status upadte, review or anything of the sort
-    return NextResponse.json({ 
-      error: "No valid fields provided for update (expected user_rating or status_id (for now))" 
+    return NextResponse.json({
+      error: "No valid fields provided for update (expected user_rating or status_id (for now))"
     }, { status: 400 });
 
   } catch (err) {
