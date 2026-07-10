@@ -3,6 +3,49 @@ import { NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
+// GET endpoint to fetch a user's entire bookshelf
+export async function GET(req: Request) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const query = {
+      name: 'get-user-bookshelf-all-api',
+      text: `
+        SELECT 
+          bi.id AS bookshelf_item_id,
+          bi.status_id,
+          bi.user_rating,
+          bi.horizon_slot,
+          b.id AS book_id,
+          b.external_id,
+          b.title,
+          b.author,
+          b.cover_image_url
+        FROM "Bookshelf_Item" bi
+        JOIN "Book" b ON bi.book_id = b.id
+        WHERE bi.user_id = $1
+        ORDER BY bi.added_at DESC
+      `,
+      values: [user.id]
+    };
+
+    const res = await pool.query(query);
+
+    return NextResponse.json({
+      success: "ok",
+      data: res.rows
+    });
+
+  } catch (err) {
+    console.error("Unexpected error fetching bookshelf:", err);
+    return NextResponse.json({ success: "not ok", error: (err as Error).message }, { status: 500 });
+  }
+}
+
+// POST endpoint to create a new resource in the user's bookshelf
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
