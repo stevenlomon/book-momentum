@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type BookshelfItem } from '@/lib/types';
 import StarRating from './StarRating';
@@ -71,17 +72,20 @@ export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsM
           </button>
 
           {/* Miniature Cover */}
-          <div className="relative w-24 h-36 rounded shadow-sm border border-[#E5E0D8] overflow-hidden shrink-0 bg-[#EFEBE1]">
-            {book.cover_image_url && (
-              <Image
-                src={book.cover_image_url}
-                alt={book.title}
-                fill
-                sizes='96px' // To silence "[browser] Image with src "https://covers.openlibrary.org/b/id/10590366-L.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance." warning
-                className="object-cover"
-              />
-            )}
-          </div>
+          <Link href={`/book/${book.external_id}`}>
+            <div className="relative w-24 h-36 rounded shadow-sm border border-[#E5E0D8] overflow-hidden shrink-0 bg-[#EFEBE1]">
+              {book.cover_image_url && (
+                <Image
+                  src={book.cover_image_url}
+                  alt={book.title}
+                  fill
+                  sizes='96px' // To silence "[browser] Image with src "https://covers.openlibrary.org/b/id/10590366-L.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance." warning
+                  className="object-cover"
+                />
+              )}
+            </div>
+          </Link>
+
 
           {/* Core Metadata */}
           <div className="flex flex-col justify-center flex-1">
