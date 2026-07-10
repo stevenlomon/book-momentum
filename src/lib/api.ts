@@ -43,7 +43,7 @@ export const searchBooks = async (query: string, page = 1, limit = 5) => { // Ke
       // Grab the "default" edition Open Library picked!
       const bestEdition = doc.editions?.docs?.[0];
       const editionId = bestEdition?.key ? bestEdition.key.split('/').pop() : null;
-      
+
       return {
         id: rawId, // We keep the Work ID as the main ID
         title: doc.title || 'Unknown Title',
@@ -59,13 +59,13 @@ export const searchBooks = async (query: string, page = 1, limit = 5) => { // Ke
     });
 
     return { results: mappedBooks };
-  
-  } catch(err) {
+
+  } catch (err) {
     // Whether `err` is already of type Error or not, we log the raw, ugly error to the server console for US to debug
     console.error(`Server error fetching books using searchBooks:`, err);
 
     // Now; normalize the error so that the UI (our to-be-built `error.tsx`) always gets a predictable Error object
-    if (err instanceof Error) { 
+    if (err instanceof Error) {
       // If it is *already* of type Error...
       throw err; // ..simply toss it up the chain to the UI
     } else {
@@ -83,7 +83,7 @@ export const getBookById = async (id: string): Promise<Book> => {
     });
 
     if (!res.ok) throw new Error(`Open Library API returned status: ${res.status}`);
-    
+
     const data = await res.json(); // Once again, we can't return yet. Open Library's data is.. extensive haha
 
     // Safely extract the summary (handling Open Library's string vs. object quirk)
@@ -114,39 +114,43 @@ export const getBookById = async (id: string): Promise<Book> => {
         }
         return { name: 'Unknown Author' };
       });
-      
+
       // Wait for all author names to return
       const resolvedAuthors = await Promise.all(authorPromises);
       authors.push(...resolvedAuthors);
     }
 
-    // Grab the Open Library default "canonical" edition
+    // We will actively hunt for an edition with a page count!
     let pageCount: number | null = null;
     let defaultEditionId: string | undefined = undefined;
 
-    // Check if Open Library has provided a canonical edition key (e.g., "/books/OL3404981M")
-    if (data.cover_edition && data.cover_edition.key) {
-      try {
-        // Fetch that specific edition directly
-        const editionRes = await fetch(`${BASE_URL}${data.cover_edition.key}.json`, {
-          headers: getHeaders(),
-        });
-        
-        if (editionRes.ok) {
-          const editionData = await editionRes.json();
-          
-          // Grab the page count, falling back to null if this specific edition omitted it
-          pageCount = typeof editionData.number_of_pages === 'number' 
-            ? editionData.number_of_pages 
-            : null;
-            
-          // Clean the key (e.g., "/books/OL3404981M" -> "OL3404981M") for our database
-          defaultEditionId = data.cover_edition.key.split('/').pop();
+    try {
+      // Fetch the editions associated with this Work
+      const editionsRes = await fetch(`${BASE_URL}/works/${id}/editions.json?limit=50`, {
+        headers: getHeaders(),
+      });
+
+      if (editionsRes.ok) {
+        const editionsData = await editionsRes.json();
+        const editions = editionsData.entries || [];
+
+        // Find the FIRST edition in the list that actually has a valid number_of_pages!
+        const editionWithPages = editions.find((ed: any) =>
+          typeof ed.number_of_pages === 'number' && ed.number_of_pages > 0
+        );
+
+        if (editionWithPages) {
+          const rawPages = editionWithPages.number_of_pages;
+          // Rounds to the nearest 50, with a floor of 50 to prevent 0-page books
+          pageCount = Math.max(50, Math.round(rawPages / 50) * 50);
+          defaultEditionId = editionWithPages.key.split('/').pop();
+        } else if (editions.length > 0) {
+          // Fallback: If NONE of them have pages, just grab the ID of the first edition
+          defaultEditionId = editions[0].key.split('/').pop();
         }
-      } catch (err) {
-        // Fail silently so the Detailed Page still loads even if the Edition fetch fails
-        console.warn(`Could not fetch the canonical edition for Work ${id}:`, err);
       }
+    } catch (err) {
+      console.warn(`Could not fetch editions for Work ${id}:`, err);
     }
 
     // Map everything back into our UI's expected Book type
@@ -157,13 +161,13 @@ export const getBookById = async (id: string): Promise<Book> => {
       subjects: data.subjects || [],
       summary: summary,
       cover_image: coverUrl,
-      page_count: pageCount, 
+      page_count: pageCount,
       default_edition_id: defaultEditionId,
     };
   } catch (err) {
     console.error(`Server error fetching book details with id ${id} using getBookById:`, err);
 
-    if (err instanceof Error) { 
+    if (err instanceof Error) {
       throw err; //
     } else {
       throw new Error("An unexpected network error occurred while contacting Open Library."); //

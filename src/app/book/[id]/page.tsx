@@ -48,13 +48,13 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
             {book.page_count ? (
               <>
                 <span className="opacity-50">•</span>
-                <span>{book.page_count} pages</span>
+                <span>ca {book.page_count} pages</span>
               </>
             ) : (
               <>
                 <span className="opacity-50">•</span>
                 <span className="italic text-[#5C613E]/70 font-serif">
-                  Page count missing for this edition
+                  Length unknown
                 </span>
               </>
             )}
