@@ -100,7 +100,8 @@ export default function ReadingTracksSection() {
 
   const handleCloseCelebration = () => {
     setCelebrationPayload(null);
-    router.refresh(); // Refresh the grid to show the newly promoted book!
+    refreshReadingTracks(); // Needed to refresh the UI client-side! (useState)
+    router.refresh();       // This refreshes the UI server-side (the entire Server Component(s))
   };
 
   return (
