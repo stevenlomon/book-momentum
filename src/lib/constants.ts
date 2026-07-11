@@ -1,0 +1,1 @@
+export const SUMMARY_CHARACTER_LIMIT = 1000;

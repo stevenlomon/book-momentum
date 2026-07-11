@@ -1,7 +1,8 @@
 import { getBookById } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
-import AddToBookshelfButton from '@/components/AddToBookshelfButton';
+import AddToBookshelfButton from '@/components/detail-page/AddToBookshelfButton';
+import ExpandableSummary from '@/components/detail-page/ExpandableSummary';
 
 export default async function DetailedViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,7 +19,8 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
 
   // Vibe coded render statement for now to keep momentum. Still turned out really pretty! AI these days, maaaan haha
   return (
-    <main className="min-h-screen p-8 max-w-5xl mx-auto">
+    // The main outer card is now a bit wider to be able to properly contain all the data, especially summaries that go bonkers bananas haha
+    <main className="min-h-screen p-8 max-w-6xl mx-auto">
       <Link href="/" className="inline-block mb-8 text-[#5C613E] hover:text-[#2C302E] font-sans text-sm transition-colors">
         ← Return to Home Page
       </Link>
@@ -36,7 +38,8 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
           />
         </div>
 
-        <div className="w-full md:w-2/3 flex flex-col">
+        {/* min-w-0 added here to stop the column from blowing out */}
+        <div className="w-full md:w-2/3 flex flex-col min-w-0">
           <h1 className="text-4xl font-heading font-normal text-[#2C302E] mb-2 leading-tight">
             {book.title}
           </h1>
@@ -83,9 +86,8 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
             <h3 className="font-sans text-xs tracking-wider text-[#5C613E] uppercase mb-3 border-b border-[#E5E0D8] pb-2">
               Summary
             </h3>
-            <p className="font-serif text-[#2C302E] leading-relaxed">
-              {book.summary || "No summary available for this work."}
-            </p>
+            {/* Replaced the <p> tag with our new Client Component */}
+            <ExpandableSummary text={book.summary} />
           </div>
 
           <div className="mt-auto pt-4 flex flex-wrap gap-4">
