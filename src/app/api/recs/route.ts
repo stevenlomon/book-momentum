@@ -21,18 +21,18 @@ export async function POST(req: Request) {
 
     // Input data validation
     const trimmedRecommendedBy = recommended_by.trim();
-    if (!trimmedRecommendedBy) {
-      return NextResponse.json({ error: "Recommended-by cannot be empty" }, { status: 400 });
+    if (trimmedRecommendedBy.length < 3) {
+      return NextResponse.json({ error: "Recommended-by cannot be less than 3 characters" }, { status: 400 });
     }
 
-    if (link !== undefined) {
+    if (link) {
       const trimmedLink = link.trim();
       if (!trimmedLink) {
         return NextResponse.json({ error: "Link cannot be empty" }, { status: 400 });
       }
     }
 
-    if (notes !== undefined) {
+    if (notes) {
       const trimmedNotes = notes.trim();
       if (!trimmedNotes) {
         return NextResponse.json({ error: "Notes cannot be empty" }, { status: 400 });

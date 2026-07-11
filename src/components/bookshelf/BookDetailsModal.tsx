@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { type BookshelfItem } from '@/lib/types';
 import StarRating from './StarRating';
 import StatusDropdown from './StatusDropdown';
+import RecommendationContextSection from './RecommendationContextSection';
 
 interface BookDetailsModalProps {
   isOpen: boolean;
@@ -109,13 +110,8 @@ export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsM
         {/* BODY: Scrollable content area */}
         <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10">
 
-          {/* RECOMMENDATION CONTEXT PLACEHOLDER */}
-          <section>
-            <h3 className="font-sans text-[10px] font-bold uppercase tracking-[0.2em] text-[#5C613E] mb-3">Recommendation Context</h3>
-            <div className="w-full min-h-20 p-4 border-2 border-dashed border-[#E5E0D8] rounded-md bg-white/50 text-sm font-serif italic text-[#5C613E]/70 flex items-center justify-center">
-              [Text area: Who recommended this and why?]
-            </div>
-          </section>
+          {/* RECOMMENDATION CONTEXT */}
+          <RecommendationContextSection bookshelfItemId={book.bookshelf_item_id} />
 
           {/* REVIEW PLACEHOLDER */}
           <section>
