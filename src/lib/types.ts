@@ -21,6 +21,20 @@ export interface OpenLibrarySearchResponse {
   results: Book[];
 }
 
+export interface TrackBook {
+  track_id: string;
+  slot_id: number;
+  book_id: string;
+  bookshelf_item_id: string; // Needed for the onHover enlarging and the Celebration modal
+  external_id: string | null;
+  title: string;
+  author: string;
+  cover_image_url: string | null;
+  custom_page_count?: number | null; // The new user entered custom page count!
+  page_count?: number | null; // The API ballpark fallback
+  current_page?: number | null; // From the Reading_Journey table
+}
+
 export interface BookshelfItem {
   bookshelf_item_id: string;
   status_id: number;

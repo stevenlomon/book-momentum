@@ -6,19 +6,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ReadingTracksModal from './ReadingTracksModal';
 import CelebrationModal from './CelebrationModal';
+import { type TrackBook } from '@/lib/types';
 
-export interface TrackBook {
-  track_id: string;
-  slot_id: number;
-  book_id: string;
-  bookshelf_item_id: string; // Needed for the onHover enlarging and the Celebration modal
-  external_id: string | null;
-  title: string;
-  author: string;
-  cover_image_url: string | null;
-  custom_page_count?: number | null; // The new user entered custom page count!
-  page_count?: number | null; // The API ballpark fallback
-  current_page?: number | null; // From the Reading_Journey table
+interface ReadingTracksSectionProps {
+  initialTracks: TrackBook[];
 }
 
 const TRACKS = [
@@ -27,43 +18,38 @@ const TRACKS = [
   { id: 'before-bedtime', title: 'Before Bedtime', description: 'Wind-down reading. Low stakes, high comfort.' } // Changed from 'bedtime' to 'before-bedtime' for coherence and ease in db queries
 ];
 
-export default function ReadingTracksSection() {
+// This now takes initialTracks as a prop as the intial data from the server! This client component is now not responsible at all for 
+// *fetching* data, only making it come to life and become interactive!
+export default function ReadingTracksSection({ initialTracks }: ReadingTracksSectionProps) {
   // In the Horizon Book section, we had a single 5-column row. Now we have a two-dimensional grid; the track and the slot. trackId comes from 
   // TRACKS, "Currently Reading" has slotId 1 and "Follow-up" has slotId 2. It starts as null meaning if it's null, the modal is closed. The 
   // alternative would be three or six separate states which sounds like an absolute nightmare to maintain. A single active modal context allows
   // us to render exactly one ReadingTrackModal at the bottom of the page! activeModalContext it is haha!
+  const [trackBooks, setTrackBooks] = useState(initialTracks); // No longer starts as an empty array; it starts as what the server has fetched and provided!
   const [activeModalContext, setActiveModalContext] = useState<{ trackId: string, slotId: number, trackTitle: string } | null>(null); // Updated to include the title cased track title to make it easier in the modal
-  const [trackBooks, setTrackBooks] = useState<TrackBook[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // New Celebration state variables
   const [isFinishingId, setIsFinishingId] = useState<string | null>(null);
   const [celebrationPayload, setCelebrationPayload] = useState<{ bookTitle: string, promotion: any } | null>(null);
   const router = useRouter(); // For router.refresh()
 
-  const fetchReadingTracks = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/tracks');
-      if (res.ok) {
-        const data = await res.json();
-        setTrackBooks(data.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching reading tracks:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // No more fetchReadingTracks!
+  // When router.refresh() happens, the server sends down new props. This effect catches them and updates the UI instantly.
+  // This useEffect is essentially the core of the entire Full Stack machinery: 
+  // Server loads initial data -> Client holds said data in Browser memory (useState) -> user interacts and triggers a background
+  // mutation -> router.refresh() asks the server for the data; the new single source of truth -> this useEffect patches this new 
+  // data into the client state without a full page reload
   useEffect(() => {
-    fetchReadingTracks();
-  }, []);
+    setTrackBooks(initialTracks);
+  }, [initialTracks]);
 
+  // And this is our new refresh function! No more fetch('/api/tracks') needed!
   const refreshReadingTracks = () => {
-    console.log("Refreshing Reading Tracks UI...");
-    fetchReadingTracks();
+    console.log("Asking server for fresh data...");
+    router.refresh(); 
   };
+  // The rest of the file stays exactly the same! Completely untouched.
+  // It's... it's all so simple yet incredibly elegant. And it just makes intuitive sense! I can never go back from using Next.js now haha!
 
   const handleFinishBook = async (e: React.MouseEvent, bookshelfItemId: string, bookTitle: string) => {
     e.preventDefault();
