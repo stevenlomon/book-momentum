@@ -83,7 +83,7 @@ export default function RecommendationContextSection({ bookshelfItemId, existing
             </div>
             {rec.notes && (
               <p className="text-sm font-serif italic text-[#5C613E]/90">
-                "{rec.notes}"
+                {rec.notes}
               </p>
             )}
           </div>
