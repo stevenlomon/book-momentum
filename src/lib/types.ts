@@ -46,7 +46,7 @@ export interface BookshelfItem {
   cover_image_url: string | null;
   horizon_slot: number | null; 
   page_count: number | null;
-  recommendation_contexts: Recommendation[];
+  recommendation_context: Recommendation[];
 }
 
 export interface Recommendation {

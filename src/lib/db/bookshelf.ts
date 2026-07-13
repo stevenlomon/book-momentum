@@ -19,6 +19,31 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
   // the codebase that has *already* grown a bit faster than I can wrap my mind around.
   const query = {
     name: 'get-user-bookshelf-all',
+    // It is Monday morning and I have had Gemini act infinitely patient senior developer and... this query is not as scary anymore! In fact!
+    // COALESCE is by far the *least* scary part and the easiest to understand! Let's take this in the order it unfolded and clicked with me,
+    // starting with the question I first asked: why can't we just JOIN the three tables Book, Bookshelf_Item, and Recommendation_Context_Row?
+    // Because. There would be several rows per bookshelf item to accomodate for the Recommendation_Context_Row columns:
+    // bookshelf_item_id, title,   author, recommended_by, link, notes
+    // 101,               My book, me :),  Bob,            NULL  "Scuffed book, but a fun time"
+    // 101,               My book, me :),  Dave,           NULL  "What?"
+    // We'd rather not want this. Compounded over every single item in our bookshelf, it would be a lot of bloat. 
+    // So the core engine of this query is `json_agg` working with `json_build_object` and `GROUP BY bi.id, b.id`. These ensure that we get a
+    // single column recommendation_context instead for every book, all in one row! Where the recommendation context is in neat JSON
+    // bookshelf_item_id, title,   author, recommendation_context
+    // 101,               My book, me :),  [{"recommended_by": "Bob", ...}, {"recommended_by": "Dave", ...}]
+    // We need `GROUP BY bi.id, b.id` since we're matching by both the id of the Bookshelf_Item table and the id of the Book table
+    // The output of this core engine is wrapped in `COALESCE` and also uses a neat `FILTER (WHERE rcr.id IS NOT NULL)`
+    // FILTER (WHERE rcr.id IS NOT NULL) ensure there are no "ghost rows"; if there is no recommendation context for a bookshelf item, skip it
+    // To understand COALESCE and the role it plays here, there is one important piece of information to consider; if the filter was to do a
+    // *too* good of a job, and there are *no* recommendation context for *any* bookshelf items, the output of the core engine would be NULL.
+    // Postgres itself would be okay with this! The object arriving in Next.js would simply be `recommendation_context: null`. What would crash
+    // is our JavaScript code on the frontend when it tries to call `.map()` on an empty list! COALESCE acts a safety net. And speaking of JS, 
+    // it acts just like a ternary operator!
+    // `const recommendation_context = output_of_json_agg !== NULL ? output_of_json_agg : []`
+    // Or! The more elegant version that uses what in JavaScript it even called The Nullish *Coalescing* Operator! They're siblings haha! Doing
+    // the exact same thing in two different environment.
+    // `const recommendation_context = output_of_json_agg ?? []`
+    // It works exactly the same here. Query conquered! 🌿
     text: `
       SELECT 
         bi.id AS bookshelf_item_id,
@@ -40,7 +65,7 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
             )
           ) FILTER (WHERE rcr.id IS NOT NULL),
           '[]'
-        ) AS recommendation_contexts
+        ) AS recommendation_context
       FROM "Bookshelf_Item" bi
       JOIN "Book" b ON bi.book_id = b.id
       LEFT JOIN "Recommendation_Context_Row" rcr ON bi.id = rcr.bookshelf_item_id
