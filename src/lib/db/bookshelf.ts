@@ -81,3 +81,32 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
 
   return initialBooks;
 };
+
+// Will be used to ensure that the "Add to Bookshelf" button acts as intended: If it's not already in our bookshelf, show "Add to
+// Bookshelf", if it *is*; show "Already in Bookshelf"
+export async function checkBookInBookshelf(externalId: string): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+
+  const query = {
+    name: 'check-book-in-bookshelf',
+    // `SELECT 1` is completely new to me, this is my first time seeing it. But it's a super neat tool to have in our SQL Toolbox! It's
+    // super efficient in situtations like these where we actually don't wanna fetch any row data from our database, we simply want the 
+    // answer to the question: Is there a match of this instance in the database? It's a boolean question! So we can think of `SELECT 1` 
+    // as the boolean answer!
+    //  It completely ignores the columns. If it finds a matching row, it doesn't read the data on the disk at all. It just spits back 
+    // the literal number 1. The data payload arriving to our server is a super lightweight `[ { "?column?": 1 } ]`
+    // And this is perfect for the final check of this file! Is rowCount greater than 0? (or 1 or larger?) Boolean question, boolean answer 
+    text: `
+      SELECT 1 
+      FROM "Bookshelf_Item" bi 
+      JOIN "Book" b ON bi.book_id = b.id 
+      WHERE bi.user_id = $1 AND b.external_id = $2
+    `,
+    values: [user.id, externalId]
+  };
+
+  const res = await pool.query(query);
+  // If rowCount is greater than 0, the book is already in the bookshelf!
+  return res.rowCount !== null && res.rowCount > 0;
+};
