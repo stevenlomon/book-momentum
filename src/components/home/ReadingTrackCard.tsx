@@ -93,7 +93,7 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
       // It shrinks back to regular size only on commit or cancel
       className={`group relative block aspect-2/3 rounded-md border border-[#E5E0D8] bg-[#FCF9F2] origin-bottom transition-all duration-300 ${isCurrentlyReading
         ? (showOverlay ? 'scale-112 z-50 shadow-2xl cursor-default' : 'scale-100 z-10 shadow-sm cursor-default')
-        : 'hover:border-[#5C613E] hover:shadow-md transition-all z-10'
+        : 'hover:scale-106 hover:border-[#5C613E] hover:shadow-md hover:z-20 transition-all z-10' // hover:scale-106 and hover:z-20 added here
         }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -110,7 +110,7 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
             fill
             sizes="(max-width: 768px) 50vw, 15vw"
             priority={true}
-            className={`object-cover w-full h-full transition-transform duration-500 ${!isCurrentlyReading && 'group-hover:scale-105'}`}
+            className="object-cover w-full h-full transition-transform duration-500" // group-hover:scale-105 removed from here to avoid double-scaling
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-[#EFEBE1]/50 border-4 border-transparent group-hover:border-white/20 transition-all">
@@ -230,7 +230,7 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
               if (!res.ok) {
                 throw new Error("Failed to unassign book");
               }
-              
+
               router.refresh(); // The "magic" graceful Next.js refresh that we've used a lot in the codebase now! 
             } catch (err) {
               console.error("Failed to unassign:", err);
