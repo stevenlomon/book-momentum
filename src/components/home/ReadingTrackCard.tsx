@@ -34,6 +34,7 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUnassigning, setIsUnassigning] = useState(false); // New state for the new unassigning action!
 
   // This was an unexpected UX obstance; it needs to be able to be an empty string! Otherwise, when we remove all our input, it defaults to 0 
   // and self-inserts this. If we remove 49 in order to write 56 real quick, it wouldn't become 56, it would become 056. This would drive
@@ -91,8 +92,8 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
       // The CSS hover scaling is conditional and based on whether or not we show the overlay
       // It shrinks back to regular size only on commit or cancel
       className={`group relative block aspect-2/3 rounded-md border border-[#E5E0D8] bg-[#FCF9F2] origin-bottom transition-all duration-300 ${isCurrentlyReading
-          ? (showOverlay ? 'scale-112 z-50 shadow-2xl cursor-default' : 'scale-100 z-10 shadow-sm cursor-default')
-          : 'hover:border-[#5C613E] hover:shadow-md transition-all z-10'
+        ? (showOverlay ? 'scale-112 z-50 shadow-2xl cursor-default' : 'scale-100 z-10 shadow-sm cursor-default')
+        : 'hover:border-[#5C613E] hover:shadow-md transition-all z-10'
         }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -172,8 +173,10 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
             </button>
           </form>
 
-          {/* SECONDARY DE-PRIORITIZED ACTION */}
-          <div className="mt-auto w-full flex justify-center pt-3 border-t border-[#FCF9F2]/10">
+          {/* BOTTOM ACTIONS CONTAINER */}
+          <div className="mt-auto w-full flex flex-col items-center pt-3 border-t border-[#FCF9F2]/10 gap-2">
+
+            {/* SECONDARY DE-PRIORITIZED ACTION */}
             <button
               type="button"
               className="flex items-center justify-center gap-1.5 text-[9px] font-sans font-semibold tracking-widest text-[#FCF9F2] border border-[#FCF9F2]/30 px-4 py-1.5 rounded-full hover:bg-[#FCF9F2] hover:text-[#2C302E] transition-all duration-300 pointer-events-auto"
@@ -182,9 +185,77 @@ export default function ReadingTrackCard({ book, isCurrentlyReading, onFinishBoo
             >
               {isFinishing ? "FINISHING..." : "✦ FINISH BOOK"}
             </button>
+
+            {/* TERTIARY ACTION: Shelve For Now */}
+            <button
+              type="button"
+              className="text-[8px] font-sans font-semibold tracking-widest text-[#FCF9F2]/50 hover:text-[#FCF9F2] hover:bg-[#FCF9F2]/10 px-3 py-1 rounded-full transition-all duration-300 pointer-events-auto"
+              onClick={(e) => {
+                e.preventDefault();
+                // TODO: Wire up the unassign action
+                console.log("Setting aside book...");
+              }}
+            >
+              SHELVE FOR NOW
+            </button>
+
           </div>
 
         </div>
+      )}
+
+      {/* SLOT 2 UNASSIGN BUTTON (The Hover 'X') */}
+      {!isCurrentlyReading && (
+        <button
+          type="button"
+          disabled={isUnassigning}
+          onClick={async (e) => {
+            e.preventDefault(); // Stop the user from navigating to the book page!
+            e.stopPropagation(); // Stop event bubbling
+
+            if (isUnassigning) return; // Prevent double-clicks
+
+            setIsUnassigning(true);
+
+            try {
+              const res = await fetch('/api/tracks/unassign', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  track_id: book.track_id, // Passed down via the TrackBook prop
+                  slot_id: 2
+                })
+              });
+
+              if (!res.ok) {
+                throw new Error("Failed to unassign book");
+              }
+              
+              router.refresh(); // The "magic" graceful Next.js refresh that we've used a lot in the codebase now! 
+            } catch (err) {
+              console.error("Failed to unassign:", err);
+              // Only release the lock if it fails so the user can try again. 
+              // If it succeeds, the component will unmount anyway when the refresh hits.
+              setIsUnassigning(false);
+            }
+          }}
+          className={`absolute top-2 right-2 z-20 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-300 shadow-sm
+      ${isUnassigning
+              ? "opacity-100 scale-90 bg-[#8C3A3A]/80 cursor-wait text-[#FCF9F2]"
+              : "opacity-0 bg-[#2C302E]/60 text-[#FCF9F2] hover:bg-[#8C3A3A] hover:scale-110 group-hover:opacity-100"
+            }
+    `}
+          title="Remove from track"
+        >
+          {isUnassigning ? (
+            // A subtle pulsing dot to respect for labor illusion while we wait for the database
+            <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-[#FCF9F2]" />
+          ) : (
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+        </button>
       )}
     </div>
   )
