@@ -29,7 +29,7 @@ export default function Sidebar() {
     },
   ];
 
-  // Vibe coded for now, modeled after mock-ups by Stitch by Google
+  // Vibe coded, modeled after mock-ups by Stitch by Google
   return (
     <aside className="w-72 h-screen sticky top-0 flex flex-col bg-[#FCF9F2] border-r border-[#E5E0D8] shrink-0 overflow-hidden">
 
@@ -47,7 +47,7 @@ export default function Sidebar() {
             Florilegium
           </h1>
         </Link>
-        
+
         <h2 className="font-sans text-[9px] font-bold uppercase tracking-[0.25em] text-[#5C613E]">
           DIGITAL RENAISSANCE BOOK GARDEN
         </h2>
@@ -80,13 +80,26 @@ export default function Sidebar() {
 
       {/* 3. BOTTOM SECTION: Actions & Footer */}
       <div className="px-6 pb-6 mt-auto">
-        {/* Begin Session Button */}
-        <button className="w-full mb-6 bg-[#424B2E] text-[#FCF9F2] font-sans text-sm font-medium tracking-wide py-3 rounded shadow-sm hover:bg-[#343b24] transition-colors flex items-center justify-center gap-2">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 4l12 6-12 6z" />
-          </svg>
-          Start Reading Session
-        </button>
+        {/* Begin Session Button; wrapped in a relative container to position our tooltip */}
+        <div className="group relative w-full mb-6">
+
+          {/* 1. The Muted Button */}
+          <button
+            type="button"
+            disabled
+            className="w-full flex items-center justify-center gap-2 bg-[#5C613E]/20 text-[#5C613E]/60 font-sans text-xs font-bold tracking-wider uppercase py-3 px-4 rounded-md cursor-not-allowed transition-all duration-300"
+          >
+            <span>▶</span> Start Reading Session
+          </button>
+
+          {/* 2. The Elegant "Coming Soon" Tooltip */}
+          <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded bg-[#2C302E] px-3 py-1.5 text-[10px] font-sans font-bold tracking-widest text-[#FCF9F2] uppercase opacity-0 transition-all duration-300 transform translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 shadow-md">
+            Coming soon 🌱
+            {/* Tiny tooltip arrow pointing down */}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2C302E]" />
+          </div>
+
+        </div>
 
         {/* Help & Privacy Links */}
         <div className="flex justify-center gap-8 mb-6">
