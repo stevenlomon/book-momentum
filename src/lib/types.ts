@@ -22,7 +22,7 @@ export interface OpenLibrarySearchResponse {
 }
 
 export interface TrackBook {
-  track_id: string;
+  track_id: number; // Now number instead of string, see comment at the TRACKS array
   slot_id: number;
   book_id: string;
   bookshelf_item_id: string; // Needed for the onHover enlarging and the Celebration modal

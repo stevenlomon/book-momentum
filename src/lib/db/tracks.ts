@@ -27,7 +27,7 @@ export async function getReadingTracks() {
     text: `
       -- SLOT 1: Currently Reading (Linked via Reading_Journey)
       SELECT 
-        LOWER(REPLACE(rt.name, ' ', '-')) AS track_id,
+        rt.id AS track_id, -- No more string manipulation needed!
         1 AS slot_id,
         b.id AS book_id,
         b.external_id,
@@ -48,7 +48,7 @@ export async function getReadingTracks() {
 
       -- SLOT 2: Follow-up (Linked directly via Bookshelf_Item)
       SELECT 
-        LOWER(REPLACE(rt.name, ' ', '-')) AS track_id,
+        rt.id AS track_id, -- No more string manipulation needed!
         2 AS slot_id,
         b.id AS book_id,
         b.external_id,

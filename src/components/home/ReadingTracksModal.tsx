@@ -12,7 +12,7 @@ import type { Book, BookshelfItem } from '@/lib/types';
 interface ReadingTracksModalProps {
   isOpen: boolean;
   onClose: () => void;
-  targetSlot: { trackId: string, slotId: number, trackTitle: string } | null // Straight from the Section component, now updated with the title too; not just a simple number anymore haha!
+  targetSlot: { trackId: number, slotId: number, trackTitle: string } | null // Straight from the Section component, now updated with the title too; not just a simple number anymore haha!
   onSuccess: () => void;
 }
 

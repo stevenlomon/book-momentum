@@ -11,10 +11,16 @@ interface ReadingTracksSectionProps {
   initialTracks: TrackBook[];
 }
 
+// The TRACKS array used to have id: 'fiction', id: 'non-fiction' and id: 'before-bedtime' which makes sense if the Reading Tracks were to be
+// hard set in stone but they won't! The user will be able to change the name and description to their heart's content to fit their life. So
+// we're changing these to be integers to align with the database. `number` across the board
+// The names and descriptions stay the same tho as the default when the user first starts to use the app! The user will alse be able to remove 
+// Reading Tracks down to 2 or 1 but they won't ever be able to have more than 3 at any given time! This is by conscious intentional design 🌿 
+// If a user is frustrated with this design choice, they'll know where to mail me haha! 
 const TRACKS = [
-  { id: 'fiction', title: 'Fiction', description: 'Immersive narratives and alternate realities.' },
-  { id: 'non-fiction', title: 'Non-fiction', description: 'Expanding models of reality and actionable knowledge.' },
-  { id: 'before-bedtime', title: 'Before Bedtime', description: 'Wind-down reading. Low stakes, high comfort.' } // Changed from 'bedtime' to 'before-bedtime' for coherence and ease in db queries
+  { id: 1, title: 'Fiction', description: 'Immersive narratives and alternate realities.' },
+  { id: 2, title: 'Non-fiction', description: 'Expanding models of reality and actionable knowledge.' },
+  { id: 3, title: 'Before Bedtime', description: 'Wind-down reading. Low stakes, high comfort.' } // Changed from 'bedtime' to 'before-bedtime' for coherence and ease in db queries
 ];
 
 // This now takes initialTracks as a prop as the intial data from the server! This client component is now not responsible at all for 
@@ -25,7 +31,7 @@ export default function ReadingTracksSection({ initialTracks }: ReadingTracksSec
   // alternative would be three or six separate states which sounds like an absolute nightmare to maintain. A single active modal context allows
   // us to render exactly one ReadingTrackModal at the bottom of the page! activeModalContext it is haha!
   const [trackBooks, setTrackBooks] = useState(initialTracks); // No longer starts as an empty array; it starts as what the server has fetched and provided!
-  const [activeModalContext, setActiveModalContext] = useState<{ trackId: string, slotId: number, trackTitle: string } | null>(null); // Updated to include the title cased track title to make it easier in the modal
+  const [activeModalContext, setActiveModalContext] = useState<{ trackId: number, slotId: number, trackTitle: string } | null>(null); // Updated to include the title cased track title to make it easier in the modal
 
   // New Celebration state variables
   const [isFinishingId, setIsFinishingId] = useState<string | null>(null);

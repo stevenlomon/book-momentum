@@ -34,10 +34,11 @@ export async function POST(req: Request) {
       await client.query('BEGIN');
 
       // First, we get the actual db UUID of the track based on the string ID (e.g., 'fiction')
+      // Temporary fix, will tend to properly when implementing full CRUD for Reading Tracks
       let dbTrackName = '';
-      if (track_id === 'fiction') dbTrackName = 'Fiction';
-      if (track_id === 'non-fiction') dbTrackName = 'Non-fiction';
-      if (track_id === 'before-bedtime') dbTrackName = 'Before Bedtime';
+      if (track_id === 1) dbTrackName = 'Fiction';
+      if (track_id === 2) dbTrackName = 'Non-fiction';
+      if (track_id === 3) dbTrackName = 'Before Bedtime';
 
       const trackRes = await client.query('SELECT id FROM "Reading_Track" WHERE user_id = $1 AND name = $2', [user.id, dbTrackName]);
 
