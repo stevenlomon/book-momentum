@@ -24,7 +24,7 @@ export async function PATCH(req: Request) {
     if (track_id === 3) dbTrackName = 'Before Bedtime';
 
     const trackRes = await pool.query(
-      'SELECT id FROM "Reading_Track" WHERE user_id = $1 AND name = $2', 
+      'SELECT id FROM "Reading_Track" WHERE user_id = $1 AND name = $2',
       [user.id, dbTrackName]
     );
 
@@ -54,9 +54,100 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ success: "ok" });
     }
 
-    // We will build out the Crossroads Modal transaction for Slot 1 right here next
+    // The more complicated Crossroads Modal transaction for Slot 1
     if (slot_id === 1) {
-      return NextResponse.json({ error: "Slot 1 unassignment coming soon!" }, { status: 501 });
+      const { target_status_id } = body;
+
+      // For this MVP version, the user is asked if they want to put it back as "Intend to Read" (1) or "Dropped" (4)
+      // Post MVP, I want to integrate a choice in User Settings to set a default so that they don't have to choose every time
+      if (!target_status_id || (target_status_id !== 1 && target_status_id !== 4)) {
+        return NextResponse.json({ error: "Valid target_status_id (1 or 4) is required for Slot 1" }, { status: 400 });
+      }
+
+      // Once again we grab a dedicated client from the pool for the transaction
+      const client = await pool.connect();
+
+      try {
+        await client.query('BEGIN');
+
+        // 1. Find the active Reading Journey AND the Follow-up book attached to this track (for auto-promotion of Follow-up Book if it exists)
+        const trackCheck = await client.query(
+          'SELECT reading_journey_id, follow_up_book_id FROM "Reading_Track" WHERE id = $1 AND user_id = $2',
+          [realTrackId, user.id]
+        );
+
+        const track = trackCheck.rows[0];
+        const journeyId = track?.reading_journey_id;
+
+        if (!journeyId) {
+          throw new Error("No active reading journey found on this track.");
+        }
+
+        // 2. Identify the Bookshelf Item attached to this Journey
+        const journeyCheck = await client.query(
+          'SELECT bookshelf_item_id FROM "Reading_Journey" WHERE id = $1',
+          [journeyId]
+        );
+
+        const bookshelfItemId = journeyCheck.rows[0].bookshelf_item_id;
+
+        // 3. Close the Reading Journey (Freeze the progress in time)
+        await client.query(
+          'UPDATE "Reading_Journey" SET finished_at = NOW() WHERE id = $1',
+          [journeyId]
+        );
+
+        // 4. Update the Bookshelf Item Status (1 = Intend to Read, 4 = Dropped)
+        await client.query(
+          'UPDATE "Bookshelf_Item" SET status_id = $1 WHERE id = $2 AND user_id = $3',
+          [target_status_id, bookshelfItemId, user.id]
+        );
+
+        // 5. Check for Follow-up and Promote (or Empty)
+        if (track.follow_up_book_id) {
+          // Promote it!! 🌿 Mark it as 2:"Currently Reading"
+          await client.query(
+            'UPDATE "Bookshelf_Item" SET status_id = 2 WHERE id = $1 AND user_id = $2',
+            [track.follow_up_book_id, user.id]
+          );
+
+          // Calculate the iteration for the book that is to be promoted
+          const iterRes = await client.query(
+            'SELECT COUNT(*) FROM "Reading_Journey" WHERE bookshelf_item_id = $1',
+            [track.follow_up_book_id]
+          );
+          const nextIteration = parseInt(iterRes.rows[0].count, 10) + 1;
+
+          // Create a brand new Reading Journey
+          const newJourneyId = crypto.randomUUID();
+          await client.query(
+            'INSERT INTO "Reading_Journey" (id, current_page, bookshelf_item_id, iteration) VALUES ($1, 0, $2, $3)',
+            [newJourneyId, track.follow_up_book_id, nextIteration]
+          );
+
+          // Promote it and update the track! Slot the new journey in, and empty out the follow-up slot 🌿
+          await client.query(
+            'UPDATE "Reading_Track" SET reading_journey_id = $1, follow_up_book_id = NULL WHERE id = $2',
+            [newJourneyId, realTrackId]
+          );
+        } else {
+          // If there is no Follow-up book, just empty the Currently Reading slot normally
+          await client.query(
+            'UPDATE "Reading_Track" SET reading_journey_id = NULL WHERE id = $1',
+            [realTrackId]
+          );
+        }
+
+        await client.query('COMMIT');
+        return NextResponse.json({ success: "ok" });
+
+      } catch (dbError) {
+        await client.query('ROLLBACK');
+        console.error("Slot 1 Unassign Transaction Failed:", dbError);
+        throw dbError;
+      } finally {
+        client.release();
+      }
     }
 
     return NextResponse.json({ error: "Invalid slot_id" }, { status: 400 });

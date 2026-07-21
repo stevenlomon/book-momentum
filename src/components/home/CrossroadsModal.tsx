@@ -34,7 +34,7 @@ export default function CrossroadsModal({ bookTitle, trackId, onClose }: Crossro
         setIsShelving(null);
         onClose(); // Close the modal
         router.refresh(); // Tell the server to empty the slot on the UI
-      }, 800);
+      }, 350); // Properly fine tuned to feel *just right* haha
 
     } catch (err) {
       console.error(err);
