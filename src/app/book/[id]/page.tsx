@@ -95,11 +95,8 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
             <ExpandableSummary text={book.summary} />
           </div>
 
-          <div className="mt-auto pt-4 flex flex-wrap gap-4">
-            < AddToBookshelfButton book={book} isAlreadyInBookshelf={isAlreadyInBookshelf} />
-            <button className="bg-transparent border border-[#424B2E] text-[#424B2E] font-sans text-sm font-medium tracking-wide px-6 py-2.5 rounded hover:bg-[#EFEBE1] transition">
-              Something else to be added here
-            </button>
+          <div className="mt-auto pt-6 w-full">
+            <AddToBookshelfButton book={book} isAlreadyInBookshelf={isAlreadyInBookshelf} />
           </div>
         </div>
       </article>

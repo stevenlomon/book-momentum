@@ -16,7 +16,7 @@ export default function AddToBookshelfButton({ book, isAlreadyInBookshelf }: Add
 
   async function handleAddToBookshelf() {
     console.log(`Preparing to save "${book.title}" to the database...`);
-    
+
     // Lock the button immediately and give visual loading feedback
     setIsProcessing(true);
     setButtonText("Adding...");
@@ -54,9 +54,9 @@ export default function AddToBookshelfButton({ book, isAlreadyInBookshelf }: Add
       });
 
       if (!itemRes.ok) throw new Error("Failed to link book to user's bookshelf.");
-      
+
       console.log("Successfully added to Bookshelf!");
-      
+
       // Success state updated to integrate with the server side seeding
       setButtonText("Added ✓");
       setTimeout(() => {
@@ -81,14 +81,13 @@ export default function AddToBookshelfButton({ book, isAlreadyInBookshelf }: Add
 
   return (
     <button
-      // We conditionally apply Tailwind classes, now depending on the isDisabled state
-      className={`font-sans text-sm font-medium tracking-wide px-6 py-2.5 rounded transition shadow-sm
-        ${isDisabled 
-          ? 'bg-[#E5E0D8] text-[#5C613E] cursor-not-allowed opacity-80' 
-          : 'bg-[#424B2E] text-[#FCF9F2] hover:bg-[#343b24]'
+      className={`w-full font-sans text-xs font-bold tracking-widest uppercase py-3.5 px-8 rounded-md transition-all shadow-sm text-center
+        ${isDisabled
+          ? 'bg-[#E5E0D8] text-[#5C613E] cursor-not-allowed opacity-80'
+          : 'bg-[#424B2E] text-[#FCF9F2] hover:bg-[#343b24] hover:shadow-md'
         }`}
       onClick={handleAddToBookshelf}
-      disabled={isDisabled} // Native HTML attribute to completely prevent clicks. Now checks isDisabled instead of isProcessing
+      disabled={isDisabled}
     >
       {buttonText}
     </button>
