@@ -25,7 +25,8 @@ export default function WelcomeModal() {
 
       // "Magic refresh" strikes again! The server will see first_name is no longer null, and this modal will gracefully vanish from the DOM.
       setTimeout(() => {
-        router.refresh(); 
+        // We push a URL parameter so the server knows this is their very first time entering!
+        router.push('/profile?greet=new');
       }, 1600); // 1600ms is me fine tuning like a madman haha! A lovely, gentle breath before landing on the Profile page
 
     } catch (error) {

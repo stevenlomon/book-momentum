@@ -5,7 +5,8 @@ import HorizonSection from '@/components/profile/HorizonSection';
 import { getHorizonBooks } from '@/lib/db/horizon';
 import WelcomeModal from '@/components/profile/WelcomeModal';
 
-export default async function ProfilePage() {
+// We now accept searchParams to look for our secret onboarding flag!
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ greet?: string }> }) {
   // The Server Side user check, which runs before the browser even sees the page! 
   const user = await getCurrentUser();
 
@@ -20,21 +21,23 @@ export default async function ProfilePage() {
   // If first_name is null (or an empty string), they haven't been onboarded!
   const needsOnboarding = !user.first_name;
 
+  // Await the params and check if they just arrived from the onboarding modal
+  const params = await searchParams;
+  const isFirstEntry = params.greet === 'new';
+
   // The rendering. All of this HTML will arrive in the browser fully baked with data!
   return (
-    <div className="min-h-screen p-8 max-w-5xl mx-auto relative">
+    // The Golden In-Between: max-w-7xl mx-auto
+    <div className="min-h-screen p-8 max-w-7xl mx-auto relative">
 
       {/* Conditionally render the onboarding overlay */}
       {needsOnboarding && <WelcomeModal />}
 
       <header className="mb-12 border-b border-[#E5E0D8] pb-6">
         <h1 className="text-4xl font-heading font-normal text-[#2C302E]">
-          {/* Now uses first_name rather than username! */}
-          Welcome back, {user.first_name}.
+          {/* Dynamically drop the "back" if it's their very first time! */}
+          Welcome{isFirstEntry ? '' : ' back'}, {user.first_name}.
         </h1>
-        <p className="text-[#5C613E] mt-2 italic font-serif">
-          This will say something neat later
-        </p>
       </header>
 
       {/* The Horizon Section. Now a modular Client Component. And now also seeded by the server! */}
