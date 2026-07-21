@@ -49,6 +49,7 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
     // With this second LEFT JOIN, we also introduce the complexity of "Cartesian Product" and the need for JSONB (JSON Binary) rather than
     // pure JSON! JSON Binary supports equality comparisons which is needed when - not if! - our second LEFT JOIN generates duplicates!
     // So this is why both COALESCE clauses now don't have `json_build_object(` but rather the new improved `DISTINCT jsonb_build_object(`!
+    // UPDATE: A third LEFT JOIN haha! Reading_Log_Post has entered the picture in order to show the raw thoughts captured upon finishing a book
     text: `
       SELECT 
         bi.id AS bookshelf_item_id,
@@ -79,7 +80,8 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
               'started_at', rj.started_at,
               'finished_at', rj.finished_at,
               'current_page', rj.current_page,
-              'iteration', rj.iteration
+              'iteration', rj.iteration,
+              'notes', rlp.notes -- Notes from the Reading_Log_Post table added to the Reading Journeys!
             )
           ) FILTER (WHERE rj.id IS NOT NULL),
           '[]'
@@ -88,6 +90,7 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
       JOIN "Book" b ON bi.book_id = b.id
       LEFT JOIN "Recommendation_Context_Row" rcr ON bi.id = rcr.bookshelf_item_id
       LEFT JOIN "Reading_Journey" rj ON bi.id = rj.bookshelf_item_id
+      LEFT JOIN "Reading_Log_Post" rlp ON rj.id = rlp.reading_journey_id
       WHERE bi.user_id = $1
       GROUP BY bi.id, b.id
       ORDER BY bi.added_at DESC

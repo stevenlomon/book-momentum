@@ -20,9 +20,9 @@ export default function JourneyTimeline({ journeys = [] }: JourneyTimelineProps)
   // Helper to format Postgres timestamp strings (e.g., "2026-07-12 14:39:30")
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Present';
-    
+
     // Quick parse for Postgres string formats to ensure cross-browser compatibility
-    const d = new Date(dateString.replace(' ', 'T')); 
+    const d = new Date(dateString.replace(' ', 'T'));
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -36,11 +36,11 @@ export default function JourneyTimeline({ journeys = [] }: JourneyTimelineProps)
 
         return (
           <div key={journey.id} className="relative z-10 flex items-start gap-4">
-            
+
             {/* The Timeline Node */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 mt-1 shadow-sm transition-colors
-              ${isFinished 
-                ? 'bg-[#EFEBE1] border-[#424B2E] text-[#424B2E]' 
+              ${isFinished
+                ? 'bg-[#EFEBE1] border-[#424B2E] text-[#424B2E]'
                 : 'bg-white border-[#5C613E]/50 text-[#5C613E]'}`}
             >
               <span className="font-sans text-[10px] font-bold">
@@ -50,19 +50,27 @@ export default function JourneyTimeline({ journeys = [] }: JourneyTimelineProps)
 
             {/* The Timeline Card */}
             <div className="flex-1 bg-white/60 border border-[#E5E0D8] rounded-md p-4">
+
+              {/* Header Row */}
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-sans text-xs font-bold tracking-widest uppercase text-[#2C302E]">
                   {isFinished ? 'Completed Read' : 'Active Read'}
                 </h4>
-                
                 <span className={`text-xs font-serif italic ${isFinished ? 'text-[#5C613E]' : 'text-[#424B2E] font-medium'}`}>
                   {formatDate(journey.started_at)} — {formatDate(journey.finished_at)}
                 </span>
               </div>
-              
-              {/* Optional: Future home of "Pages Read" or specific log metrics */}
+
+              {/* Raw Thoughts / Notes on its own line */}
+              {journey.notes && (
+                <p className="font-serif italic text-sm text-[#5C613E]/90 mt-3 whitespace-pre-wrap">
+                  "{journey.notes}"
+                </p>
+              )}
+
+              {/* Active Page Progress */}
               {!isFinished && (
-                <p className="font-sans text-xs text-[#5C613E]/80">
+                <p className="font-sans text-xs text-[#5C613E]/80 mt-3">
                   Currently on page {journey.current_page}
                 </p>
               )}
