@@ -8,6 +8,7 @@ import StarRating from './StarRating';
 import StatusDropdown from './StatusDropdown';
 import RecommendationContextSection from './RecommendationContextSection';
 import ReviewSection from './ReviewSection';
+import JourneyTimeline from './JourneyTimeline';
 
 interface BookDetailsModalProps {
   isOpen: boolean;
@@ -120,16 +121,13 @@ export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsM
           {/* RECOMMENDATION CONTEXT */}
           <RecommendationContextSection bookshelfItemId={book.bookshelf_item_id} existingRecs={book.recommendation_context} />
 
-          {/* REVIEW PLACEHOLDER */}
+          {/* USER REVIEW */}
           <ReviewSection bookshelfItemId={book.bookshelf_item_id} initialReview={book.review} />
 
-          {/* JOURNEYS PLACEHOLDER */}
+          {/* JOURNEYS TIMELINE */}
           <section>
             <h3 className="font-sans text-[10px] font-bold uppercase tracking-[0.2em] text-[#5C613E] mb-3">Reading Journeys</h3>
-            <div className="w-full p-6 border-2 border-dashed border-[#E5E0D8] rounded-md bg-white/50 text-sm font-sans text-[#5C613E]/70 flex flex-col items-center justify-center">
-              <span className="text-2xl opacity-30 mb-2">⏳</span>
-              <span>[Timeline: Started reading on X, Finished on Y]</span>
-            </div>
+            <JourneyTimeline journeys={book.journeys} />
           </section>
 
         </div>
