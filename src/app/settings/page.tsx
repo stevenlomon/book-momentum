@@ -14,7 +14,7 @@ export default async function SettingsPage() {
       {/* The cheeky stub */}
       <h1 className="text-4xl font-heading text-[#2C302E] mb-4">404</h1>
       <p className="text-[#5C613E] font-serif italic text-lg mb-12">
-        This page could not be found. <br/> (Just kidding. Real settings are coming soon.)
+        This page could not be found. <br/> (Just kidding. Real settings are coming soon :) )
       </p>
 
       {/* Account Info & Logout */}
