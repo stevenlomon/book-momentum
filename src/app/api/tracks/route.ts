@@ -139,3 +139,73 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: "not ok", error: (err as Error).message }, { status: 500 });
   }
 };
+
+// A user can up to 2 of their 3 Reading Tracks but ONLY if the Reading Track currently has zero assigned books! This adds
+// intentionality and ensures that there are no Reading Tracks with books assigned as Currently Reading and Follow-up being
+// deleted by the grace of fat fingers
+export async function DELETE(req: Request) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { track_id } = body;
+
+    if (!track_id) {
+      return NextResponse.json({ error: "Missing required track_id" }, { status: 400 });
+    }
+
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+
+      // First Guardrail: Ensure they aren't deleting their last track
+      const countRes = await client.query('SELECT COUNT(*) FROM "Reading_Track" WHERE user_id = $1', [user.id]);
+      if (parseInt(countRes.rows[0].count, 10) <= 1) {
+        throw new Error("MinimumTracksReached");
+      }
+
+      // Second Guardrail: Ensure the track is completely empty!
+      const trackRes = await client.query(
+        'SELECT reading_journey_id, follow_up_book_id FROM "Reading_Track" WHERE id = $1 AND user_id = $2', 
+        [track_id, user.id]
+      );
+      
+      if (trackRes.rowCount === 0) {
+        throw new Error("TrackNotFound");
+      }
+
+      const track = trackRes.rows[0];
+      if (track.reading_journey_id !== null || track.follow_up_book_id !== null) {
+        throw new Error("TrackNotEmpty");
+      }
+
+      // Execute the deletion (safe and simple with the two guardrails in place)
+      await client.query('DELETE FROM "Reading_Track" WHERE id = $1 AND user_id = $2', [track_id, user.id]);
+
+      await client.query('COMMIT');
+      return NextResponse.json({ success: "ok" });
+      
+    } catch (dbError) {
+      await client.query('ROLLBACK');
+      
+      if (dbError instanceof Error) {
+        if (dbError.message === "MinimumTracksReached") {
+          return NextResponse.json({ error: "You must have at least one active Reading Track." }, { status: 400 });
+        }
+        if (dbError.message === "TrackNotEmpty") {
+          return NextResponse.json({ error: "You must unassign all books before dismantling a track." }, { status: 400 });
+        }
+      }
+      throw dbError;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Unexpected error deleting reading track:", err);
+    return NextResponse.json({ success: "not ok", error: (err as Error).message }, { status: 500 });
+  }
+};
