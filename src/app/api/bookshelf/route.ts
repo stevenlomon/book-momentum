@@ -90,6 +90,7 @@ export async function POST(req: Request) {
 // the book needs to be marked "Read" in order to rate it. It would cause more frustration overall that appreciation!
 // Now also handles read status updates! Which re-wires the logic of the route handler slightly to be more flexible and dynamic
 // Now also upadtes custom page count, the new row in the table!
+// Now also handles Reviews
 export async function PATCH(req: Request) {
   try {
     const user = await getCurrentUser();
@@ -98,7 +99,7 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { bookshelf_item_id, user_rating, status_id, custom_page_count } = body; // Now also takes status! And custom_page_count, the new table row!
+    const { bookshelf_item_id, user_rating, status_id, custom_page_count, review = null } = body; // Now also takes status, custom_page_count and review
 
     // This is now the only element in the payload that is truly required that we check before anythign else
     if (!bookshelf_item_id) {
@@ -317,6 +318,35 @@ export async function PATCH(req: Request) {
       return NextResponse.json({
         success: "ok",
         data: updatedCustomPageCount
+      });
+    }
+
+    // Our new Review gatekeeper
+    if (review !== undefined) {
+      const query = {
+        name: 'update-review',
+        text: `
+        UPDATE "Bookshelf_Item" 
+        SET review = $1 
+        WHERE id = $2 AND user_id = $3 
+        RETURNING *
+      `,
+        // If it's an empty string, we convert it to null to keep the DB clean
+        values: [review ? review.trim() : null, bookshelf_item_id, user.id]
+      };
+
+      const res = await pool.query(query);
+      const updatedReview = res.rows[0];
+
+      if (res.rowCount === 0) {
+        return NextResponse.json({ error: "Item not found or unauthorized" }, { status: 404 });
+      }
+
+      console.log(`Successfully updated review for Bookshelf_Item with id ${bookshelf_item_id}`);
+
+      return NextResponse.json({
+        success: "ok",
+        data: updatedReview
       });
     }
 

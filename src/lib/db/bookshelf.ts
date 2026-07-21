@@ -44,11 +44,13 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
     // the exact same thing in two different environment.
     // `const recommendation_context = output_of_json_agg ?? []`
     // It works exactly the same here. Query conquered! 🌿
+    // UPDATE: Now also grabs `bi.review` and will soon also grab the connected Reading Journey
     text: `
       SELECT 
         bi.id AS bookshelf_item_id,
         bi.status_id,
         bi.user_rating,
+        bi.review,
         b.id AS book_id,
         b.external_id,
         b.title,

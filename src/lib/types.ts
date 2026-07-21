@@ -47,6 +47,7 @@ export interface BookshelfItem {
   horizon_slot: number | null; 
   page_count: number | null;
   recommendation_context: Recommendation[];
+  review: string | null;
 }
 
 export interface Recommendation {

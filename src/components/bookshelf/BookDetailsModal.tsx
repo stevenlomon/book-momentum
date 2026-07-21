@@ -7,6 +7,7 @@ import { type BookshelfItem } from '@/lib/types';
 import StarRating from './StarRating';
 import StatusDropdown from './StatusDropdown';
 import RecommendationContextSection from './RecommendationContextSection';
+import ReviewSection from './ReviewSection';
 
 interface BookDetailsModalProps {
   isOpen: boolean;
@@ -120,12 +121,7 @@ export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsM
           <RecommendationContextSection bookshelfItemId={book.bookshelf_item_id} existingRecs={book.recommendation_context} />
 
           {/* REVIEW PLACEHOLDER */}
-          <section>
-            <h3 className="font-sans text-[10px] font-bold uppercase tracking-[0.2em] text-[#5C613E] mb-3">Your Review</h3>
-            <div className="w-full min-h-30 p-4 border-2 border-dashed border-[#E5E0D8] rounded-md bg-white/50 text-sm font-serif italic text-[#5C613E]/70 flex items-center justify-center">
-              [Text area: Private review or summary...]
-            </div>
-          </section>
+          <ReviewSection bookshelfItemId={book.bookshelf_item_id} initialReview={book.review} />
 
           {/* JOURNEYS PLACEHOLDER */}
           <section>
