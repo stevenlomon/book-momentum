@@ -45,6 +45,10 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
     // `const recommendation_context = output_of_json_agg ?? []`
     // It works exactly the same here. Query conquered! 🌿
     // UPDATE: Now also grabs `bi.review` and will soon also grab the connected Reading Journey
+    // Let's fully dissect the growth expansion of this query. We have two LEFT JOIN now and also two COALESCE, as if one wasn't enough haha!
+    // With this second LEFT JOIN, we also introduce the complexity of "Cartesian Product" and the need for JSONB (JSON Binary) rather than
+    // pure JSON! JSON Binary supports equality comparisons which is needed when - not if! - our second LEFT JOIN generates duplicates!
+    // So this is why both COALESCE clauses now don't have `json_build_object(` but rather the new improved `DISTINCT jsonb_build_object(`!
     text: `
       SELECT 
         bi.id AS bookshelf_item_id,
@@ -58,7 +62,7 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
         b.cover_image_url,
         COALESCE(
           json_agg(
-            json_build_object(
+            DISTINCT jsonb_build_object(
               'id', rcr.id,
               'bookshelf_item_id', rcr.bookshelf_item_id,
               'recommended_by', rcr.recommended_by,
@@ -67,10 +71,23 @@ export async function getDetailedBookshelf(): Promise<BookshelfItem[]> {
             )
           ) FILTER (WHERE rcr.id IS NOT NULL),
           '[]'
-        ) AS recommendation_context
+        ) AS recommendation_context,
+         COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', rj.id,
+              'started_at', rj.started_at,
+              'finished_at', rj.finished_at,
+              'current_page', rj.current_page,
+              'iteration', rj.iteration
+            )
+          ) FILTER (WHERE rj.id IS NOT NULL),
+          '[]'
+        ) AS journeys
       FROM "Bookshelf_Item" bi
       JOIN "Book" b ON bi.book_id = b.id
       LEFT JOIN "Recommendation_Context_Row" rcr ON bi.id = rcr.bookshelf_item_id
+      LEFT JOIN "Reading_Journey" rj ON bi.id = rj.bookshelf_item_id
       WHERE bi.user_id = $1
       GROUP BY bi.id, b.id
       ORDER BY bi.added_at DESC

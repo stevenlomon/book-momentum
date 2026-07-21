@@ -48,6 +48,7 @@ export interface BookshelfItem {
   page_count: number | null;
   recommendation_context: Recommendation[];
   review: string | null;
+  journeys: ReadingJourney[];
 }
 
 export interface Recommendation {
@@ -56,4 +57,12 @@ export interface Recommendation {
   recommended_by: string;
   link?: string | null;
   notes?: string | null;
+}
+
+export interface ReadingJourney {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  current_page: number;
+  iteration: number;
 }
