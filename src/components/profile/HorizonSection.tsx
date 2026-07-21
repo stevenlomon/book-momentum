@@ -16,6 +16,10 @@ export default function HorizonSection({ initialBooks }: HorizonSectionProps) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null); // Instead of `const [isModalOpen, setIsModalOpen] = useState(false);`, we track the specific slot clicked (1-5). If it's null, the modal is closed
   const [horizonBooks, setHorizonBooks] = useState(initialBooks); // Simply grabs initialBooks now from the server
 
+  // NEW: State for the Two-Tap Unassignment
+  const [confirmingSlot, setConfirmingSlot] = useState<number | null>(null);
+  const [unassigningSlot, setUnassigningSlot] = useState<number | null>(null);
+
   const router = useRouter();
 
   // When router.refresh() happens, the server sends down new fresh props with new fresh data. And once again; this effect catches them and patches the UI instantly
@@ -26,8 +30,42 @@ export default function HorizonSection({ initialBooks }: HorizonSectionProps) {
   // And the new clean refresh function. No more client-side fetch required
   const refreshHorizon = () => {
     console.log("Asking server for fresh Horizon data...");
-    router.refresh(); 
+    router.refresh();
   }
+
+  const handleUnassign = async (e: React.MouseEvent, bookshelfItemId: string, slot: number) => {
+    e.preventDefault(); // Stop the Link from navigating!
+    e.stopPropagation();
+
+    // Tap 1: Ask for confirmation
+    if (confirmingSlot !== slot) {
+      setConfirmingSlot(slot);
+      return;
+    }
+
+    // Tap 2: Execute!
+    setUnassigningSlot(slot);
+    try {
+      const res = await fetch('/api/bookshelf/horizon', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookshelf_item_id: bookshelfItemId,
+          horizon_slot: null // Passing null clears the slot in the DB
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to unassign Horizon book");
+
+      refreshHorizon();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to remove book. Please try again.");
+    } finally {
+      setUnassigningSlot(null);
+      setConfirmingSlot(null);
+    }
+  };
 
   return (
     <section>
@@ -55,9 +93,38 @@ export default function HorizonSection({ initialBooks }: HorizonSectionProps) {
             return (
               <Link
                 key={slot}
-                href={'/'} // Not sure if I want this to lead to the Detailed View Page (would require extra plumbing to let the GET Route Handler get hold of external_id) or somewhere else. Root for now
+                href={`/book/${assignedBook.external_id || assignedBook.book_id}`}
                 className="group relative block aspect-2/3 rounded-md overflow-hidden border border-[#E5E0D8] hover:border-[#5C613E] hover:shadow-md transition-all shadow-sm w-full bg-[#FCF9F2]"
               >
+
+                {/* NEW: The Two-Tap Unassign Button */}
+                <button
+                  type="button"
+                  disabled={unassigningSlot === slot}
+                  onClick={(e) => handleUnassign(e, assignedBook.bookshelf_item_id, slot)}
+                  onMouseLeave={() => setConfirmingSlot(null)} // Cancel confirmation if mouse leaves
+                  className={`absolute top-2 right-2 z-20 flex h-7 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-300 shadow-sm
+                    ${unassigningSlot === slot
+                      ? "w-7 opacity-100 scale-90 bg-[#8C3A3A]/80 cursor-wait text-[#FCF9F2]"
+                      : confirmingSlot === slot
+                        ? "w-auto px-3 opacity-100 bg-[#8C3A3A] hover:bg-[#6b2b2b] text-[#FCF9F2]"
+                        : "w-7 opacity-0 bg-[#2C302E]/60 text-[#FCF9F2] hover:bg-[#8C3A3A] group-hover:opacity-100"
+                    }
+                  `}
+                  title="Remove from Horizon"
+                >
+                  {unassigningSlot === slot ? (
+                    <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-[#FCF9F2]" />
+                  ) : confirmingSlot === slot ? (
+                    <span className="text-[10px] font-sans font-bold tracking-widest uppercase">Remove?</span>
+                  ) : (
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </button>
+
+                {/* Cover Image (Unchanged) */}
                 {assignedBook.cover_image_url ? (
                   <Image
                     src={assignedBook.cover_image_url}
