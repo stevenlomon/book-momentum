@@ -34,7 +34,7 @@ export default function HorizonModal({ isOpen, onClose, targetSlot, onSuccess }:
         const userBookshelfItem = book as BookshelfItem // Type Assertion to calm TS down haha
         console.log(`[Database Action] Assigning user bookshelf item ${userBookshelfItem.bookshelf_item_id} to Horizon Slot ${targetSlot}`);
 
-        const res = await fetch('/api/bookshelf', {
+        const res = await fetch('/api/bookshelf/horizon', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

@@ -99,7 +99,7 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { bookshelf_item_id, user_rating, status_id, custom_page_count, review = null } = body; // Now also takes status, custom_page_count and review
+    const { bookshelf_item_id, user_rating, status_id, custom_page_count, review } = body; // Now also takes status, custom_page_count and review
 
     // This is now the only element in the payload that is truly required that we check before anythign else
     if (!bookshelf_item_id) {
