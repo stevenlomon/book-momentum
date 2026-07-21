@@ -224,13 +224,15 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
     <div className="flex justify-center w-full">
 
       {/* The inner container naturally shrinks to fit 1, 2, or 3 tracks */}
-      <div className="flex flex-col xl:flex-row relative w-full xl:w-auto divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8]">
+      <div className="flex flex-col xl:flex-row w-full justify-center divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8]">
 
         {/* Render the Active Tracks: We map over localTracks now! */}
         {localTracks.map((track) => (
-          <section key={track.id} className="py-8 xl:py-0 px-4 xl:px-8 first:xl:pl-0 last:xl:pr-0 flex flex-col">
+          // `w-1/3` and `shrink-0` now explicitly lock the geometry to prevent flexbox auto-squishing
+          <section key={track.id} className="w-full xl:w-1/3 shrink-0 py-8 xl:py-0 px-4 xl:px-6 flex flex-col">
 
-            <div className="mb-8 min-h-24 group relative">
+            {/* `min-h-25` guarantees the grids align perfectly regardless of description length */}
+            <div className="mb-6 min-h-25 group relative">
               {editingTrackId === track.id ? (
                 // EDIT MODE
                 <div className="flex flex-col gap-2 animate-in fade-in duration-200 pr-8">
