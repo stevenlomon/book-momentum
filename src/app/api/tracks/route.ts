@@ -79,9 +79,55 @@ import { getCurrentUser } from '@/lib/auth';
 //   }
 // };
 
+// Reading Track creation now possible! But I'm doubling down on the constraint that a user can never have more than 3 tracks at any given time!
 export async function POST(req: Request) {
-  // To be coded in the future when we allow users to create their own Reading Tracks. As well as a PATCH and DELETE probably for full CRUD
-}
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { name, description } = body;
+
+    if (!name || name.trim().length === 0) {
+      return NextResponse.json({ error: "Track name is required" }, { status: 400 });
+    }
+
+    const client = await pool.connect();
+
+    try {
+      // Guardrail: Ensure they don't exceed 3 tracks
+      const countRes = await client.query('SELECT COUNT(*) FROM "Reading_Track" WHERE user_id = $1', [user.id]);
+      if (parseInt(countRes.rows[0].count, 10) >= 3) {
+        return NextResponse.json({ error: "Maximum of 3 Reading Tracks allowed." }, { status: 400 });
+      }
+
+      const query = {
+        name: 'insert-reading-track',
+        text: `
+          INSERT INTO "Reading_Track" (user_id, name, description)
+          VALUES ($1, $2, $3)
+          RETURNING id, name AS title, description
+        `,
+        values: [user.id, name.trim(), description ? description.trim() : null]
+      };
+
+      const res = await client.query(query);
+
+      return NextResponse.json({
+        success: "ok",
+        data: res.rows[0]
+      });
+    } finally {
+      client.release();
+    }
+
+  } catch (err) {
+    console.error("Unexpected error creating reading track:", err);
+    return NextResponse.json({ success: "not ok", error: (err as Error).message }, { status: 500 });
+  }
+};
 
 // For editing the name or description of a Reading Track
 export async function PATCH(req: Request) {

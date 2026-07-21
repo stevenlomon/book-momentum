@@ -38,21 +38,27 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
   const [trackBooks, setTrackBooks] = useState(initialTracks); // No longer starts as an empty array; it starts as what the server has fetched and provided!
   const [activeModalContext, setActiveModalContext] = useState<{ trackId: number, slotId: number, trackTitle: string } | null>(null); // Updated to include the title cased track title to make it easier in the modal
 
-  // New Celebration state variables
+  // Celebration modal state variables
   const [isFinishingId, setIsFinishingId] = useState<string | null>(null);
   const [celebrationPayload, setCelebrationPayload] = useState<{ bookTitle: string, promotion: any } | null>(null);
   const [crossroadsPayload, setCrossroadsPayload] = useState<{ trackId: number, bookTitle: string } | null>(null);
 
-  // New Inline Editing state variables
+  // Inline editing state variables
   const [localTracks, setLocalTracks] = useState(initialTrackMetadata); // Elevating TRACKS to state so we can mutate it locally!
   const [editingTrackId, setEditingTrackId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [isSavingTrack, setIsSavingTrack] = useState(false);
 
-  // New Track deletion state variables
+  // Track deletion state variables
   const [trackToDelete, setTrackToDelete] = useState<{ id: number, title: string } | null>(null);
   const [isDeletingTrack, setIsDeletingTrack] = useState(false);
+
+  // Track creation state variables
+  const [isAddingTrack, setIsAddingTrack] = useState(false);
+  const [newTrackTitle, setNewTrackTitle] = useState("");
+  const [newTrackDescription, setNewTrackDescription] = useState("");
+  const [isSavingNewTrack, setIsSavingNewTrack] = useState(false);
 
   const router = useRouter(); // For router.refresh()
 
@@ -188,193 +194,312 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
     }
   };
 
+  const handleCreateTrack = async () => {
+    if (!newTrackTitle.trim()) return;
+    setIsSavingNewTrack(true);
+    try {
+      const res = await fetch('/api/tracks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newTrackTitle.trim(), description: newTrackDescription.trim() })
+      });
+      if (!res.ok) throw new Error("Failed to create track");
+
+      const data = await res.json();
+      setLocalTracks(prev => [...prev, data.data]);
+      setIsAddingTrack(false);
+      setNewTrackTitle("");
+      setNewTrackDescription("");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create track. Please try again.");
+    } finally {
+      setIsSavingNewTrack(false);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8] -mx-4 xl:mx-0">
-      {/* We map over localTracks now! */}
-      {localTracks.map((track) => (
-        <section key={track.id} className="py-8 xl:py-0 px-4 xl:px-8 first:xl:pl-0 last:xl:pr-0 flex flex-col">
+    // The outer flex container ensures the entire track block stays perfectly centered on the page
+    <div className="flex justify-center w-full">
 
-          <div className="mb-8 min-h-24 group relative">
-            {editingTrackId === track.id ? (
-              // EDIT MODE
-              <div className="flex flex-col gap-2 animate-in fade-in duration-200 pr-8">
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  // Removed border-b, added a subtle rounded background for edit mode
-                  className="w-full text-2xl font-heading text-[#2C302E] bg-[#EFEBE1]/50 rounded px-2 py-1 outline-none focus:bg-white transition-colors"
-                  autoFocus
-                />
-                <textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  // Removed border-b, added matching rounded background
-                  className="w-full text-[#5C613E] font-serif italic text-sm leading-snug bg-[#EFEBE1]/50 rounded px-2 py-1.5 outline-none resize-none focus:bg-white transition-colors"
-                  rows={2}
-                />
-                <div className="flex items-start justify-between mt-1 px-2">
-                  <div className="flex items-center gap-3 pt-1">
-                    <button
-                      onClick={() => handleSaveTrack(track.id)}
-                      disabled={isSavingTrack || !editTitle.trim()}
-                      className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#424B2E] hover:text-[#2C302E] transition-colors disabled:opacity-50"
-                    >
-                      {isSavingTrack ? 'Saving...' : 'Save'}
-                    </button>
-                    <button
-                      onClick={() => setEditingTrackId(null)}
-                      disabled={isSavingTrack}
-                      className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#5C613E]/70 hover:text-[#5C613E] transition-colors disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
+      {/* The inner container naturally shrinks to fit 1, 2, or 3 tracks */}
+      <div className="flex flex-col xl:flex-row relative w-full xl:w-auto divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8]">
+
+        {/* Render the Active Tracks: We map over localTracks now! */}
+        {localTracks.map((track) => (
+          <section key={track.id} className="py-8 xl:py-0 px-4 xl:px-8 first:xl:pl-0 last:xl:pr-0 flex flex-col">
+
+            <div className="mb-8 min-h-24 group relative">
+              {editingTrackId === track.id ? (
+                // EDIT MODE
+                <div className="flex flex-col gap-2 animate-in fade-in duration-200 pr-8">
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    // Removed border-b, added a subtle rounded background for edit mode
+                    className="w-full text-2xl font-heading text-[#2C302E] bg-[#EFEBE1]/50 rounded px-2 py-1 outline-none focus:bg-white transition-colors"
+                    autoFocus
+                  />
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    // Removed border-b, added matching rounded background
+                    className="w-full text-[#5C613E] font-serif italic text-sm leading-snug bg-[#EFEBE1]/50 rounded px-2 py-1.5 outline-none resize-none focus:bg-white transition-colors"
+                    rows={2}
+                  />
+                  <div className="flex items-start justify-between mt-1 px-2">
+                    <div className="flex items-center gap-3 pt-1">
+                      <button
+                        onClick={() => handleSaveTrack(track.id)}
+                        disabled={isSavingTrack || !editTitle.trim()}
+                        className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#424B2E] hover:text-[#2C302E] transition-colors disabled:opacity-50"
+                      >
+                        {isSavingTrack ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => setEditingTrackId(null)}
+                        disabled={isSavingTrack}
+                        className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#5C613E]/70 hover:text-[#5C613E] transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    {/* The Delete Button Area */}
+                    {localTracks.length > 1 && (() => {
+                      // Check if this specific track has any books assigned to it
+                      const hasBooks = trackBooks.some(b => b.track_id === track.id);
+
+                      return (
+                        <div className="flex flex-col items-end">
+                          <button
+                            onClick={() => setTrackToDelete({ id: track.id, title: track.title })}
+                            disabled={hasBooks}
+                            className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#8C3A3A]/70 hover:text-[#8C3A3A] transition-colors disabled:opacity-30 disabled:cursor-not-allowed pt-1"
+                            title={hasBooks ? "Clear this track before deleting" : "Dismantle Track"}
+                          >
+                            Dismantle Track
+                          </button>
+                          {hasBooks && (
+                            <span className="text-[9px] font-serif italic text-[#8C3A3A]/60 mt-0.5 pr-0.5">
+                              *Unassign books to delete
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
-
-                  {/* The Delete Button Area */}
-                  {localTracks.length > 1 && (() => {
-                    // Check if this specific track has any books assigned to it
-                    const hasBooks = trackBooks.some(b => b.track_id === track.id);
-
-                    return (
-                      <div className="flex flex-col items-end">
-                        <button
-                          onClick={() => setTrackToDelete({ id: track.id, title: track.title })}
-                          disabled={hasBooks}
-                          className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#8C3A3A]/70 hover:text-[#8C3A3A] transition-colors disabled:opacity-30 disabled:cursor-not-allowed pt-1"
-                          title={hasBooks ? "Clear this track before deleting" : "Dismantle Track"}
-                        >
-                          Dismantle Track
-                        </button>
-                        {hasBooks && (
-                          <span className="text-[9px] font-serif italic text-[#8C3A3A]/60 mt-0.5 pr-0.5">
-                            *Unassign books to delete
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })()}
                 </div>
-              </div>
-            ) : (
-              // VIEW MODE
-              <div className="pr-8 relative">
-                <h2 className="text-2xl font-heading text-[#2C302E]">{track.title}</h2>
-                <p className="text-[#5C613E] font-serif italic text-sm mt-1 leading-snug">{track.description}</p>
+              ) : (
+                // VIEW MODE
+                <div className="pr-8 relative">
+                  <h2 className="text-2xl font-heading text-[#2C302E]">{track.title}</h2>
+                  <p className="text-[#5C613E] font-serif italic text-sm mt-1 leading-snug">{track.description}</p>
 
-                {/* The Hover Pen Icon */}
-                <button
-                  onClick={() => startEditing(track.id, track.title, track.description)}
-                  className="absolute top-1 -right-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-[#5C613E]/50 hover:text-[#424B2E]"
-                  title="Edit Track"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
+                  {/* The Hover Pen Icon */}
+                  <button
+                    onClick={() => startEditing(track.id, track.title, track.description)}
+                    className="absolute top-1 -right-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-[#5C613E]/50 hover:text-[#424B2E]"
+                    title="Edit Track"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
 
-          {/* Track Grid: Exactly 2 slots (Currently Reading + Up Next) */}
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            {[1, 2].map((slot) => {
-              const assignedBook = trackBooks.find(b => b.track_id === track.id && b.slot_id === slot);
-              const slotLabel = slot === 1 ? "Currently Reading" : "Up Next";
+            {/* Track Grid: Exactly 2 slots (Currently Reading + Up Next) */}
+            <div className="grid grid-cols-2 gap-4 flex-1">
+              {[1, 2].map((slot) => {
+                const assignedBook = trackBooks.find(b => b.track_id === track.id && b.slot_id === slot);
+                const slotLabel = slot === 1 ? "Currently Reading" : "Up Next";
 
-              if (assignedBook) {
-                // SCENARIO A: THE SLOT IS FILLED
-                // Now has a fully dedicated client component for the Reading Track card with the new current_page input feature 
-                // being implemented. We make this into its own dedicated component but *not* the Assignment button in Scenario B.
-                // Yes, we *could* make that its own component and even try to make it so that it could live both here and in the
-                // Horizon section. But.. just because you *can* do something doesn't mean that you *should* and that it serves
-                // you to. 
-                // Here it doesn't serve us; the need isn't there and it would slow down MVP momentum. *Just in time, not just in case*
-                const isCurrentlyReading = slot === 1;
+                if (assignedBook) {
+                  // SCENARIO A: THE SLOT IS FILLED
+                  // Now has a fully dedicated client component for the Reading Track card with the new current_page input feature 
+                  // being implemented. We make this into its own dedicated component but *not* the Assignment button in Scenario B.
+                  // Yes, we *could* make that its own component and even try to make it so that it could live both here and in the
+                  // Horizon section. But.. just because you *can* do something doesn't mean that you *should* and that it serves
+                  // you to. 
+                  // Here it doesn't serve us; the need isn't there and it would slow down MVP momentum. *Just in time, not just in case*
+                  const isCurrentlyReading = slot === 1;
 
+                  return (
+                    <div key={`${track.id}-${slot}`} className="flex flex-col gap-3 relative">
+
+                      {/* The new, self-contained component. `e` is type inferred as `MouseEvent<Element, MouseEvent>`! */}
+                      <ReadingTrackCard
+                        book={assignedBook}
+                        isCurrentlyReading={isCurrentlyReading}
+                        onFinishBook={(e) => handleFinishBook(e, assignedBook.bookshelf_item_id, assignedBook.title)}
+                        onShelveBook={(e) => { //onFinishBook and onShelveBook differ in the sense that shelving doesn't immediately talk to the database. It simply delegates the database transaction to the modal rather than firing immediately. Until later when we introduce the default behavior in User Settings!
+                          e.preventDefault();
+                          e.stopPropagation(); // onFisnishBook also uses `e.stopPropagation();` but it lives in `handleFinishBook`!
+                          setCrossroadsPayload({ trackId: track.id, bookTitle: assignedBook.title });
+                        }}
+                        isFinishing={isFinishingId === assignedBook.bookshelf_item_id}
+                      />
+
+                      <p className="text-[9px] font-sans font-bold tracking-widest text-[#5C613E] uppercase text-center relative z-10">
+                        {slotLabel}
+                      </p>
+                    </div>
+                  );
+                }
+
+                // SCENARIO B: THE SLOT IS EMPTY
                 return (
-                  <div key={`${track.id}-${slot}`} className="flex flex-col gap-3 relative">
-
-                    {/* The new, self-contained component. `e` is type inferred as `MouseEvent<Element, MouseEvent>`! */}
-                    <ReadingTrackCard
-                      book={assignedBook}
-                      isCurrentlyReading={isCurrentlyReading}
-                      onFinishBook={(e) => handleFinishBook(e, assignedBook.bookshelf_item_id, assignedBook.title)}
-                      onShelveBook={(e) => { //onFinishBook and onShelveBook differ in the sense that shelving doesn't immediately talk to the database. It simply delegates the database transaction to the modal rather than firing immediately. Until later when we introduce the default behavior in User Settings!
-                        e.preventDefault();
-                        e.stopPropagation(); // onFisnishBook also uses `e.stopPropagation();` but it lives in `handleFinishBook`!
-                        setCrossroadsPayload({ trackId: track.id, bookTitle: assignedBook.title });
-                      }}
-                      isFinishing={isFinishingId === assignedBook.bookshelf_item_id}
-                    />
-
-                    <p className="text-[9px] font-sans font-bold tracking-widest text-[#5C613E] uppercase text-center relative z-10">
+                  <button
+                    key={`${track.id}-${slot}`}
+                    type='button'
+                    className="group relative flex flex-col items-center justify-center aspect-2/3 border-2 border-dashed border-[#E5E0D8] rounded-md bg-white/30 hover:bg-[#EFEBE1]/50 hover:border-[#5C613E]/40 transition-all cursor-pointer w-full"
+                    onClick={() => setActiveModalContext({ trackId: track.id, slotId: slot, trackTitle: track.title })}
+                  >
+                    <div className="w-8 h-8 flex items-center justify-center border border-[#E5E0D8] rounded bg-white text-[#5C613E] group-hover:text-[#2C302E] group-hover:border-[#5C613E] transition-colors mb-3 shadow-sm">
+                      <span className="text-lg font-light">+</span>
+                    </div>
+                    <p className="text-[11px] font-serif text-[#5C613E]/70 italic mb-1 text-center px-1">
+                      Assign book
+                    </p>
+                    <p className="text-[9px] font-sans font-semibold tracking-widest text-[#5C613E] uppercase mt-2">
                       {slotLabel}
                     </p>
-                  </div>
-                );
-              }
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        ))}
 
-              // SCENARIO B: THE SLOT IS EMPTY
-              return (
+        {/* ADD TRACK FORM: Snaps into flow when triggered */}
+        {localTracks.length < 3 && (
+          isAddingTrack ? (
+            // FORM VIEW: Rendered IN FLOW so it physically takes up space and completes the grid
+            <section className="w-full xl:w-100 py-8 xl:py-0 px-4 xl:px-8 border-t xl:border-t-0 xl:border-l border-[#E5E0D8] flex flex-col">
+              <div className="mb-8 min-h-24 group relative">
+                <div className="flex flex-col gap-2 animate-in fade-in duration-200 pr-8">
+                  <input
+                    type="text"
+                    placeholder="Track Title..."
+                    value={newTrackTitle}
+                    onChange={(e) => setNewTrackTitle(e.target.value)}
+                    className="w-full text-2xl font-heading text-[#2C302E] bg-[#EFEBE1]/50 rounded px-2 py-1 outline-none focus:bg-white transition-colors"
+                    autoFocus
+                  />
+                  <textarea
+                    placeholder="Description (optional)"
+                    value={newTrackDescription}
+                    onChange={(e) => setNewTrackDescription(e.target.value)}
+                    className="w-full text-[#5C613E] font-serif italic text-sm leading-snug bg-[#EFEBE1]/50 rounded px-2 py-1.5 outline-none resize-none focus:bg-white transition-colors"
+                    rows={2}
+                  />
+                  <div className="flex items-start justify-between mt-1 px-2">
+                    <div className="flex items-center gap-3 pt-1">
+                      <button
+                        onClick={handleCreateTrack}
+                        disabled={isSavingNewTrack || !newTrackTitle.trim()}
+                        className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#424B2E] hover:text-[#2C302E] transition-colors disabled:opacity-50"
+                      >
+                        {isSavingNewTrack ? 'Creating...' : 'Create Track'}
+                      </button>
+                      <button
+                        onClick={() => { setIsAddingTrack(false); setNewTrackTitle(""); setNewTrackDescription(""); }}
+                        disabled={isSavingNewTrack}
+                        className="font-sans text-[10px] font-bold tracking-widest uppercase text-[#5C613E]/70 hover:text-[#5C613E] transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dummy slots to exactly mirror the body shape of a Reading Track */}
+              <div className="grid grid-cols-2 gap-4 flex-1">
+                <div className="aspect-2/3 border-2 border-dashed border-[#E5E0D8] rounded-md bg-transparent"></div>
+                <div className="aspect-2/3 border-2 border-dashed border-[#E5E0D8] rounded-md bg-transparent"></div>
+              </div>
+            </section>
+          ) : (
+            <>
+              {/* DESKTOP GHOST TRACK: Absolute positioned hover zone so it doesn't affect active track centering! */}
+              <div className="hidden xl:flex absolute left-full top-0 h-full w-100 flex-col opacity-0 hover:opacity-100 transition-opacity">
+                {/* Matches padding of the active tracks and adds the visual border */}
+                <div className="w-full h-full border-l border-[#E5E0D8] pl-8 flex flex-col">
+                  {/* The button spans the entire height; we don't lie about the shape of a Reading Track! */}
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingTrack(true)}
+                    className="group relative flex flex-col items-center justify-center flex-1 border-2 border-dashed border-[#E5E0D8] rounded-md bg-transparent hover:bg-[#EFEBE1]/50 hover:border-[#5C613E]/40 transition-all cursor-pointer w-full"
+                  >
+                    <div className="w-10 h-10 flex items-center justify-center border border-[#E5E0D8] rounded-full bg-white text-[#5C613E] group-hover:text-[#2C302E] group-hover:border-[#5C613E] transition-colors mb-4 shadow-sm">
+                      <span className="text-2xl font-light">+</span>
+                    </div>
+                    <h2 className="text-xl font-heading text-[#2C302E] mb-1">Add Track</h2>
+                    <p className="text-xs font-serif text-[#5C613E]/70 italic text-center px-4">
+                      Expand your garden
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* MOBILE ADD TRACK BUTTON: In-flow because mobile doesn't have hover states */}
+              <section className="xl:hidden w-full py-8 px-4 flex flex-col border-t border-[#E5E0D8]">
                 <button
-                  key={`${track.id}-${slot}`}
-                  type='button'
-                  className="group relative flex flex-col items-center justify-center aspect-2/3 border-2 border-dashed border-[#E5E0D8] rounded-md bg-white/30 hover:bg-[#EFEBE1]/50 hover:border-[#5C613E]/40 transition-all cursor-pointer w-full"
-                  onClick={() => setActiveModalContext({ trackId: track.id, slotId: slot, trackTitle: track.title })}
+                  type="button"
+                  onClick={() => setIsAddingTrack(true)}
+                  className="group relative flex flex-col items-center justify-center flex-1 border-2 border-dashed border-[#E5E0D8] rounded-md bg-transparent hover:bg-[#EFEBE1]/50 hover:border-[#5C613E]/40 transition-all cursor-pointer w-full min-h-62.5"
                 >
-                  <div className="w-8 h-8 flex items-center justify-center border border-[#E5E0D8] rounded bg-white text-[#5C613E] group-hover:text-[#2C302E] group-hover:border-[#5C613E] transition-colors mb-3 shadow-sm">
-                    <span className="text-lg font-light">+</span>
+                  <div className="w-10 h-10 flex items-center justify-center border border-[#E5E0D8] rounded-full bg-white text-[#5C613E] mb-4 shadow-sm">
+                    <span className="text-2xl font-light">+</span>
                   </div>
-                  <p className="text-[11px] font-serif text-[#5C613E]/70 italic mb-1 text-center px-1">
-                    Assign book
-                  </p>
-                  <p className="text-[9px] font-sans font-semibold tracking-widest text-[#5C613E] uppercase mt-2">
-                    {slotLabel}
-                  </p>
+                  <h2 className="text-xl font-heading text-[#2C302E]">Add Track</h2>
                 </button>
-              );
-            })}
-          </div>
+              </section>
+            </>
+          )
+        )}
 
-          { /* Our Reading Track Modal */}
-          <ReadingTracksModal
-            isOpen={activeModalContext !== null} // Only open if activeModalContext is a valid object
-            onClose={() => setActiveModalContext(null)}
-            targetSlot={activeModalContext}
-            onSuccess={refreshReadingTracks}
-          />
+      </div>
 
-          { /* Our Celebration Modal */}
-          {celebrationPayload && (
-            <CelebrationModal
-              bookTitle={celebrationPayload.bookTitle}
-              promotion={celebrationPayload.promotion}
-              onClose={handleCloseCelebration}
-            />
-          )}
+      {/* ALL MODALS (Safely extracted outside the map loop) */}
+      < ReadingTracksModal
+        isOpen={activeModalContext !== null} // Only open if activeModalContext is a valid object
+        onClose={() => setActiveModalContext(null)}
+        targetSlot={activeModalContext}
+        onSuccess={refreshReadingTracks}
+      />
 
-          { /* Our Crossroads Modal */}
-          {crossroadsPayload && (
-            <CrossroadsModal
-              bookTitle={crossroadsPayload.bookTitle}
-              trackId={crossroadsPayload.trackId}
-              onClose={() => setCrossroadsPayload(null)}
-            />
-          )}
+      {celebrationPayload && (
+        <CelebrationModal
+          bookTitle={celebrationPayload.bookTitle}
+          promotion={celebrationPayload.promotion}
+          onClose={handleCloseCelebration}
+        />
+      )}
 
-          { /* And our new Delete Track Modal. Most likely the last haha! */}
-          {trackToDelete && trackToDelete.id === track.id && (
-            <DeleteTrackModal
-              trackTitle={trackToDelete.title}
-              isDeleting={isDeletingTrack}
-              onClose={() => setTrackToDelete(null)}
-              onConfirm={handleDeleteTrack}
-            />
-          )}
+      {crossroadsPayload && (
+        <CrossroadsModal
+          bookTitle={crossroadsPayload.bookTitle}
+          trackId={crossroadsPayload.trackId}
+          onClose={() => setCrossroadsPayload(null)}
+        />
+      )}
 
-        </section>
-      ))}
+      { /* And our new Delete Track Modal. Most likely the last haha! */}
+      {trackToDelete && (
+        <DeleteTrackModal
+          trackTitle={trackToDelete.title}
+          isDeleting={isDeletingTrack}
+          onClose={() => setTrackToDelete(null)}
+          onConfirm={handleDeleteTrack}
+        />
+      )}
+
     </div>
-  );
-}
+  )
+};
