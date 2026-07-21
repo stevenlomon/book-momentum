@@ -22,7 +22,7 @@ export default async function LoginPage() {
   // I love that past comment. 2 weeks ago. What a journey so far! And so much to look forward to on the future horizon too! I do have a *MUCH* clearer
   // picture of the design now haha!
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="w-full max-w-md bg-[#FCF9F2] rounded-lg shadow-xl border border-[#E5E0D8] p-10 relative overflow-hidden">
         
         {/* Header Section */}
