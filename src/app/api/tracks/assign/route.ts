@@ -33,19 +33,18 @@ export async function POST(req: Request) {
       // -- Start Transaction --
       await client.query('BEGIN');
 
-      // First, we get the actual db UUID of the track based on the string ID (e.g., 'fiction')
-      // Temporary fix, will tend to properly when implementing full CRUD for Reading Tracks
-      let dbTrackName = '';
-      if (track_id === 1) dbTrackName = 'Fiction';
-      if (track_id === 2) dbTrackName = 'Non-fiction';
-      if (track_id === 3) dbTrackName = 'Before Bedtime';
+      // // First, we get the actual db UUID of the track based on the string ID (e.g., 'fiction')
+      // // Temporary fix, will tend to properly when implementing full CRUD for Reading Tracks
+      // let dbTrackName = '';
+      // if (track_id === 1) dbTrackName = 'Fiction';
+      // if (track_id === 2) dbTrackName = 'Non-fiction';
+      // if (track_id === 3) dbTrackName = 'Before Bedtime';
 
-      const trackRes = await client.query('SELECT id FROM "Reading_Track" WHERE user_id = $1 AND name = $2', [user.id, dbTrackName]);
-
+      // Tracks are now actually grabbed from the database and not hardcoded!
+      const trackRes = await client.query('SELECT id FROM "Reading_Track" WHERE user_id = $1 AND id = $2', [user.id, track_id]);
       if (trackRes.rowCount === 0) {
-        throw new Error(`Reading track '${dbTrackName}' not found for user.`);
+        throw new Error(`Reading track not found for user.`);
       }
-
       const realTrackId = trackRes.rows[0].id;
 
       // Determine if we are assigning "Currently Reading" (1) or "Up Next" (2)

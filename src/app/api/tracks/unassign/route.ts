@@ -16,22 +16,21 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // First, we get the actual db UUID of the track based on the numeric ID
-    // Temporary fix mirroring the assignment route, will tend to properly when implementing full CRUD for Reading Tracks
-    let dbTrackName = '';
-    if (track_id === 1) dbTrackName = 'Fiction';
-    if (track_id === 2) dbTrackName = 'Non-fiction';
-    if (track_id === 3) dbTrackName = 'Before Bedtime';
-
+    // // First, we get the actual db UUID of the track based on the numeric ID
+    // // Temporary fix mirroring the assignment route, will tend to properly when implementing full CRUD for Reading Tracks
+    // let dbTrackName = '';
+    // if (track_id === 1) dbTrackName = 'Fiction';
+    // if (track_id === 2) dbTrackName = 'Non-fiction';
+    // if (track_id === 3) dbTrackName = 'Before Bedtime';
+    // Now is the time to directly query by ID, gracefully dropping the hardcoded strings
     const trackRes = await pool.query(
-      'SELECT id FROM "Reading_Track" WHERE user_id = $1 AND name = $2',
-      [user.id, dbTrackName]
+      'SELECT id FROM "Reading_Track" WHERE user_id = $1 AND id = $2',
+      [user.id, track_id]
     );
 
     if (trackRes.rowCount === 0) {
-      return NextResponse.json({ error: `Reading track '${dbTrackName}' not found for user.` }, { status: 404 });
+      return NextResponse.json({ error: `Reading track not found for user.` }, { status: 404 });
     }
-
     const realTrackId = trackRes.rows[0].id;
 
     if (slot_id === 2) {
