@@ -10,6 +10,21 @@ export async function POST(req: Request) {
     const rawPassword = body.password; // This is now the direct equivalent of `const rawPassword = req.body.password;` from my Biscord code
     const username = body.username;
 
+    // Explicitly check if the username is already taken (Case-Insensitive)
+    const checkRes = await pool.query(
+      'SELECT id FROM "User" WHERE LOWER(username) = LOWER($1)',
+      [username]
+    );
+
+    // If rowCount is greater than 0, a match was found! Return a 409 Conflict.
+    if ((checkRes.rowCount ?? 0) > 0) {
+      return NextResponse.json(
+        { success: "not ok", error: "Username already taken" },
+        { status: 409 }
+      );
+    }
+
+    // If the check passes, proceed with creation
     const hashedPassword = await bcrypt.hash(rawPassword, 10); // Untouched from Biscord!
 
     // Unlike Biscord where we have auth_id in the User table, we now have user_id in the Auth table which is more pragmatic. We therefore need to create the User first, then the Auth entry
