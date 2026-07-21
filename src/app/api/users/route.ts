@@ -37,6 +37,21 @@ export async function POST(req: Request) {
     const result2 = await pool.query('INSERT INTO "Auth"(user_id, hashed_password) VALUES($1, $2) RETURNING *', [userId, hashedPassword]); // Still using parameterized queries
     console.log("Auth table insertion result", result2.rows[0]);
 
+    // NEW: Plant the initial Reading Tracks for the new user! Moved here from ReadingTracksSection.tsx
+    const defaultTracks = [
+      { name: 'Fiction', description: 'Immersive narratives and alternate realities.' },
+      { name: 'Non-fiction', description: 'Expanding models of reality and actionable knowledge.' },
+      { name: 'Before Bedtime', description: 'Wind-down reading. Low stakes, high comfort.' }
+    ];
+
+    for (const track of defaultTracks) {
+      await pool.query(
+        'INSERT INTO "Reading_Track" (user_id, name, description) VALUES ($1, $2, $3)',
+        [userId, track.name, track.description]
+      );
+    }
+    console.log(`Seeded 3 default reading tracks for user ${username}`);
+
     // `res.status(201).json({` is replaced with..
     return NextResponse.json({
       success: "ok",

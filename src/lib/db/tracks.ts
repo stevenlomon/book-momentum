@@ -10,8 +10,30 @@ export async function getReadingTracks() {
     redirect('/login');
   }
 
-  const query = {
-    name: 'get-user-reading-tracks',
+  // Since we want the name and description of a Reading Track to be persistent, we need to grab it this data too from the database! And 
+  // since the query we already have relies on JOIN, it completely ignores a track if has zero assigned book! Since the user needs to 
+  // always be able to see their Reading Tracks, even when they are technically empty, we'll fetch the Track metadata separately from
+  // the assigned books
+
+  // The first query only focuses on the Reading Track metadata: name and description
+  const tracksQuery = {
+    name: 'get-user-reading-tracks-metadata',
+    text: `
+      SELECT 
+        id, 
+        name AS title, 
+        description 
+      FROM "Reading_Track" 
+      WHERE user_id = $1 
+      ORDER BY id ASC
+    `,
+    values: [user.id]
+  };
+  const tracksRes = await pool.query(tracksQuery);
+
+  // Our previous monster query haha. Focuses only on fetching the assigned books (in any)
+  const assignmentsQuery = {
+    name: 'get-user-reading-track-assignments',
     // Also quite a chonky query. We're need JOIN cuz a simple 'SELECT * FROM "Reading_Track" WHERE user_id = $1' wouldn't
     // return title, author and the cover_image_url! 
     // And we glue together the two subqueries that use JOIN with a UNION ALL. Instead of adding data horizontally with more columns
@@ -67,6 +89,11 @@ export async function getReadingTracks() {
     values: [user.id]
   };
 
-  const res = await pool.query(query);
-  return res.rows;
+  const assignmentsRes = await pool.query(assignmentsQuery);
+
+  // We return both payloads bundled nicely together!
+  return {
+    metadata: tracksRes.rows,
+    assignments: assignmentsRes.rows
+  }
 };

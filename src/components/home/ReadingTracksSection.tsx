@@ -9,6 +9,7 @@ import CelebrationModal from './CelebrationModal';
 import CrossroadsModal from './CrossroadsModal';
 
 interface ReadingTracksSectionProps {
+  initialTrackMetadata: { id: number, title: string, description: string }[];
   initialTracks: TrackBook[];
 }
 
@@ -18,15 +19,17 @@ interface ReadingTracksSectionProps {
 // The names and descriptions stay the same tho as the default when the user first starts to use the app! The user will alse be able to remove 
 // Reading Tracks down to 2 or 1 but they won't ever be able to have more than 3 at any given time! This is by conscious intentional design 🌿 
 // If a user is frustrated with this design choice, they'll know where to mail me haha! 
-const TRACKS = [
-  { id: 1, title: 'Fiction', description: 'Immersive narratives and alternate realities.' },
-  { id: 2, title: 'Non-fiction', description: 'Expanding models of reality and actionable knowledge.' },
-  { id: 3, title: 'Before Bedtime', description: 'Wind-down reading. Low stakes, high comfort.' } // Changed from 'bedtime' to 'before-bedtime' for coherence and ease in db queries
-];
+
+// This default array of Reading Tracks now lives in app/api/users/route.ts where we create users!
+// const TRACKS = [
+//   { id: 1, title: 'Fiction', description: 'Immersive narratives and alternate realities.' },
+//   { id: 2, title: 'Non-fiction', description: 'Expanding models of reality and actionable knowledge.' },
+//   { id: 3, title: 'Before Bedtime', description: 'Wind-down reading. Low stakes, high comfort.' } // Changed from 'bedtime' to 'before-bedtime' for coherence and ease in db queries
+// ];
 
 // This now takes initialTracks as a prop as the intial data from the server! This client component is now not responsible at all for 
 // *fetching* data, only making it come to life and become interactive!
-export default function ReadingTracksSection({ initialTracks }: ReadingTracksSectionProps) {
+export default function ReadingTracksSection({ initialTrackMetadata, initialTracks }: ReadingTracksSectionProps) {
   // In the Horizon Book section, we had a single 5-column row. Now we have a two-dimensional grid; the track and the slot. trackId comes from 
   // TRACKS, "Currently Reading" has slotId 1 and "Follow-up" has slotId 2. It starts as null meaning if it's null, the modal is closed. The 
   // alternative would be three or six separate states which sounds like an absolute nightmare to maintain. A single active modal context allows
@@ -40,7 +43,7 @@ export default function ReadingTracksSection({ initialTracks }: ReadingTracksSec
   const [crossroadsPayload, setCrossroadsPayload] = useState<{ trackId: number, bookTitle: string } | null>(null);
 
   // New Inline Editing state variables
-  const [localTracks, setLocalTracks] = useState(TRACKS); // Elevating TRACKS to state so we can mutate it locally!
+  const [localTracks, setLocalTracks] = useState(initialTrackMetadata); // Elevating TRACKS to state so we can mutate it locally!
   const [editingTrackId, setEditingTrackId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -143,7 +146,7 @@ export default function ReadingTracksSection({ initialTracks }: ReadingTracksSec
       );
 
       setEditingTrackId(null);
-      // router.refresh(); // Will be uncommented once we actually fetch the name and description from the database
+      router.refresh(); // Now uncommented since we actually fetch the name and description from the database!
     } catch (err) {
       console.error(err);
       alert("Failed to save track updates. Please try again.");

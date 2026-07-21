@@ -4,8 +4,8 @@ import { getReadingTracks } from '@/lib/db/tracks';
 // This is now a Server Component that does Server Side fetching too! Implementing the same "server seeds the client" pattern that we 
 // use for the Bookshelf page! Therefore it now needs to be async
 export default async function HomePage() {
-  // Fetch the initial data...
-  const initialTracks = await getReadingTracks();
+  // Fetch the initial data... (now destructuring our updated payload)
+  const { metadata, assignments } = await getReadingTracks();
 
   return (
     <div className="min-h-screen bg-[#FCF9F2] px-8 py-12">
@@ -20,7 +20,7 @@ export default async function HomePage() {
 
       {/* The grid and its state as an imported interactive client component */}
       {/* ...and seed the client! Server fetches the initial data, the client makes it come to life! */}
-      <ReadingTracksSection initialTracks={initialTracks} />
+      <ReadingTracksSection initialTrackMetadata={metadata} initialTracks={assignments} />
 
     </div>
   )
