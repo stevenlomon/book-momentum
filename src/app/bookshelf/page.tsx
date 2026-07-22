@@ -1,6 +1,8 @@
 import BookshelfClient from '@/components/bookshelf/BookshelfClient';
 import { getDetailedBookshelf } from '@/lib/db/bookshelf';
 
+export const dynamic = 'force-dynamic'; // Signals to Next.js that this page is server-rendered per request!
+
 export default async function BookshelfPage() {
   // Since this is a server component, we can do this! Use what the brain consider's "Backend functions"... in a Frontend component haha!
   // This is truly where Next.js shines and shows that *there is no "backend" and no "frontend"; only full-stack!!
