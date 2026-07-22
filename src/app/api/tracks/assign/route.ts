@@ -102,8 +102,8 @@ export async function POST(req: Request) {
           await client.query(
             // started_at is taken care of by Postgres. current_page defaults to 0 when starting a new Reading Journey with the book
             `INSERT INTO "Reading_Journey" (id, current_page, bookshelf_item_id, iteration) 
-            VALUES ($1, startingPage, $2, $3)`, // We now insert using our new dynamic startingPage instead of a hardcoded 0!
-            [newJourneyId, bookshelf_item_id, nextIteration]
+            VALUES ($1, $2, $3, $4)`, // We now insert using our new dynamic startingPage instead of a hardcoded 0!
+            [newJourneyId, startingPage, bookshelf_item_id, nextIteration]
           );
 
           activeJourneyId = newJourneyId;
