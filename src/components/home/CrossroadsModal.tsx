@@ -80,7 +80,7 @@ export default function CrossroadsModal({ bookTitle, trackId, onClose }: Crossro
               {isShelving === 1 ? "Shelving..." : "Back on the Shelf"}
             </span>
             <span className="font-serif text-xs text-[#5C613E] italic">
-              Return to "Intend to Read" for later.
+              return to &quot;Intend to Read&quot; for later.
             </span>
           </button>
 

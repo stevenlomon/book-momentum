@@ -4,7 +4,6 @@
 // to keep the momentum going and prioritize speed
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useBookSearch } from '@/hooks/useBookSearch';
 import { useBookshelf } from '@/hooks/useBookshelf';
 import type { Book, BookshelfItem } from '@/lib/types';
@@ -29,8 +28,6 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
   const { books: bookshelfItems, isLoading: isLoadingUserBookshelf } = useBookshelf(isOpen);
 
   const showExternalResults = searchTerm.trim().length >= 3;
-
-  const router = useRouter();
 
   // Updated: We now accept an optional finalPageCount
   const handleAssignBook = async (book: BookshelfItem | Book, source: 'UserBookshelf' | 'OpenLibrary', finalPageCount: number | null = null) => {

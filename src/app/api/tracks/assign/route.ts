@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { pool } from '@/lib/db';
-import bcrypt from 'bcrypt';
 
 // The Route Handler to be called when assigning a book, either from the User Bookshelf or Open Library, as their Currently Reading or Follow-up
 // to one of their Reading Track. Now in Development, the Reading Tracks are hard coded as my three Reading Tracks, set in TRACKS in ReadinTracksSection.tsx

@@ -48,7 +48,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: "not ok" }, { status: 500 });
   }
 };
-
-export async function GET(req: Request) {
-  // To be implemented
-}

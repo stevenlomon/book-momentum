@@ -68,7 +68,7 @@ export default async function SettingsPage() {
               <div className="max-w-md">
                 <p className="font-sans text-sm font-semibold text-[#2C302E]">Default Shelving Action</p>
                 <p className="font-serif text-sm text-[#5C613E] italic mt-1 leading-relaxed">
-                  Bypass the Crossroads modal when stepping away from a book and default to a specific action (e.g., always return to "Intend to Read").
+                  Bypass the Crossroads modal when stepping away from a book and default to a specific action (e.g., always return to &quot;Intend to Read&quot;).
                 </p>
               </div>
               <div className="bg-[#EFEBE1]/50 px-4 py-2 rounded border border-[#E5E0D8] text-[10px] font-sans font-bold text-[#5C613E] uppercase tracking-widest shrink-0">

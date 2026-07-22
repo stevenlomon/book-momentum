@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type TrackBook } from '@/lib/types';
 import ReadingTrackCard from './ReadingTrackCard';
@@ -35,12 +35,12 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
   // TRACKS, "Currently Reading" has slotId 1 and "Follow-up" has slotId 2. It starts as null meaning if it's null, the modal is closed. The 
   // alternative would be three or six separate states which sounds like an absolute nightmare to maintain. A single active modal context allows
   // us to render exactly one ReadingTrackModal at the bottom of the page! activeModalContext it is haha!
-  const [trackBooks, setTrackBooks] = useState(initialTracks); // No longer starts as an empty array; it starts as what the server has fetched and provided!
+  const trackBooks = initialTracks; // No longer starts as an empty array; it starts as what the server has fetched and provided! Also; doesn't need to be a state variable thanks to server seeding + router.refresh()!
   const [activeModalContext, setActiveModalContext] = useState<{ trackId: number, slotId: number, trackTitle: string } | null>(null); // Updated to include the title cased track title to make it easier in the modal
 
   // Celebration modal state variables
   const [isFinishingId, setIsFinishingId] = useState<string | null>(null);
-  const [celebrationPayload, setCelebrationPayload] = useState<{ bookTitle: string, promotion: any } | null>(null);
+  const [celebrationPayload, setCelebrationPayload] = useState<{ bookTitle: string, promotion: { promotedBook: string | null; trackName: string; finishedJourneyId: string } } | null>(null);
   const [crossroadsPayload, setCrossroadsPayload] = useState<{ trackId: number, bookTitle: string } | null>(null);
 
   // Inline editing state variables
@@ -68,9 +68,9 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
   // Server loads initial data -> Client holds said data in Browser memory (useState) -> user interacts and triggers a background
   // mutation -> router.refresh() asks the server for the data; the new single source of truth -> this useEffect patches this new 
   // data into the client state without a full page reload
-  useEffect(() => {
-    setTrackBooks(initialTracks);
-  }, [initialTracks]);
+  // useEffect(() => {
+  //   setTrackBooks(initialTracks);
+  // }, [initialTracks]); Since trackBooks is no longer a state variable, this useEffect is no longer needed!
 
   // And this is our new refresh function! No more fetch('/api/tracks') needed!
   const refreshReadingTracks = () => {

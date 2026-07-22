@@ -1,7 +1,7 @@
 'use client'
 // The modal that will be shown when clicking an empty Horizon Book slot on the Profile page
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useBookSearch } from '@/hooks/useBookSearch';
 import { useBookshelf } from '@/hooks/useBookshelf';
 import type { Book, BookshelfItem } from '@/lib/types';

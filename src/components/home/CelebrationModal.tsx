@@ -21,7 +21,7 @@ export default function CelebrationModal({ bookTitle, promotion, onClose }: Cele
   const handleSave = async () => {
     setIsSaving(true);
 
-    const res = await fetch('/api/log-posts', {
+    await fetch('/api/log-posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

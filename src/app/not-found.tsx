@@ -15,7 +15,7 @@ export default function NotFound() {
       </h1>
       
       <p className="mb-10 max-w-md text-lg font-serif italic leading-relaxed text-[#5C613E]">
-        It seems you've wandered past the edges of the garden. The path you are looking for does not exist.
+        It seems you&apos;ve wandered past the edges of the garden. The path you are looking for does not exist.
       </p>
 
       <Link 

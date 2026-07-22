@@ -14,16 +14,14 @@ export function useBookSearch(errorLogPrefix = "Book search error:") {
   // Our useEffect to achieve debouncing. Mostly untouched compared to the Pokémon project, and now the core of a custom hook!
   useEffect(() => {
     // If the input is empty or too short, reset state and prevent fetching
+    // We let derived state handle the wiping now, NO setState here!
     if (searchTerm.trim().length < 3) {
-      setResults([]);
-      setIsSearching(false);
-      setError(null);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
 
-    // Handle local state. Moved here to prevent "No works found" flicked
-    setIsSearching(true);
-    setError(null);
+    // setIsSearching(true);
+    // setError(null); Local state is NOT handled here anymore. Instead...
 
     // Clear previous timeout if user is still typing quickly
     if (timeoutRef.current) {
@@ -32,6 +30,9 @@ export function useBookSearch(errorLogPrefix = "Book search error:") {
 
     // If the user stops typing for 500ms, this runs
     timeoutRef.current = setTimeout(async () => {
+      // ...the local state updates is done *here*. This prevents synchronous cascading renders
+      setIsSearching(true);
+      setError(null);
       // Do the fetching business via our Proxy Route Handler
       try {
         // We want our API key securely on our server, never in the Browser. We don't use searchBooks directly here

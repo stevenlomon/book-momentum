@@ -32,7 +32,7 @@ export default function PrivacyPage() {
             What We Collect
           </h2>
           <ul className="list-disc pl-5 space-y-2 text-[#5C613E]">
-            <li><strong className="font-semibold text-[#2C302E]">Your Username & Password:</strong> Now in Beta, we won't ask for your email. Your password is irreversibly hashed and salted before it ever touches our database. We cannot see it, and we cannot recover it for you.</li>
+            <li><strong className="font-semibold text-[#2C302E]">Your Username & Password:</strong> Now in Beta, we won&apos;t ask for your email. Your password is irreversibly hashed and salted before it ever touches our database. We cannot see it, and we cannot recover it for you.</li>
             <li><strong className="font-semibold text-[#2C302E]">Your Library:</strong> The books you add, the statuses you set, the reviews you write, and the reading journeys you log are stored securely on our servers so you can access them across your devices.</li>
           </ul>
         </section>
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
             Your Sovereignty
           </h2>
           <p className="mb-4">
-            You own your intellectual journey. If you ever wish to delete a review, drop a book, or permanently delete your entire account, that data is wiped from our active databases. We do not maintain "ghost profiles" of our users.
+            You own your intellectual journey. If you ever wish to delete a review, drop a book, or permanently delete your entire account, that data is wiped from our active databases. We do not maintain &quot;ghost profiles&quot; of our users.
           </p>
           <p className="text-[#5C613E] italic">
             Built with intention. Guarded with trust.

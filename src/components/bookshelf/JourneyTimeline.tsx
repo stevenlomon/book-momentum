@@ -64,7 +64,7 @@ export default function JourneyTimeline({ journeys = [] }: JourneyTimelineProps)
               {/* Raw Thoughts / Notes on its own line */}
               {journey.notes && (
                 <p className="font-serif italic text-sm text-[#5C613E]/90 mt-3 whitespace-pre-wrap">
-                  "{journey.notes}"
+                  &quot;{journey.notes}&quot;
                 </p>
               )}
 

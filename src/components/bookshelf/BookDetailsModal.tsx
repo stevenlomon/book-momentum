@@ -17,9 +17,9 @@ interface BookDetailsModalProps {
 }
 
 export default function BookDetailsModal({ isOpen, onClose, book }: BookDetailsModalProps) {
+  const router = useRouter(); // For router.refresh()! Also needs to placed here; hooks must be called before any if statements! I didn't know this!
+  
   if (!isOpen || !book) return null;
-
-  const router = useRouter(); // For router.refresh()!
 
   // The function to talk to our newly created user rating PATCH route
   const handleRatingUpdate = async (newRating: number | null) => {

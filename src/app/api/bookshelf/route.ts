@@ -4,7 +4,7 @@ import { pool } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 // GET endpoint to fetch a user's entire bookshelf
-export async function GET(_req: Request) {
+export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) {

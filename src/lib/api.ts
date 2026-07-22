@@ -36,6 +36,7 @@ export const searchBooks = async (query: string, page = 1, limit = 5) => { // Ke
     const data = await res.json(); // Parse the external JSON from Open Library into a JS object. But we don't return yet!
 
     // Map Open Library's layout into our 'Book' type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mappedBooks: Book[] = (data.docs || []).map((doc: any) => { // `any` since it's 3rd party data
       // Open Library Keys look like "/works/OL27448W". We split and grab the actual ID.
       const rawId = doc.key ? doc.key.split('/').pop() : Math.random().toString();
@@ -102,6 +103,7 @@ export const getBookById = async (id: string): Promise<Book> => {
     const authors: Author[] = [];
     if (data.authors && Array.isArray(data.authors)) {
       // Map over the author keys and fire off simultaneous fetch requests
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const authorPromises = data.authors.map(async (a: any) => {
         if (a.author && a.author.key) {
           const authorRes = await fetch(`${BASE_URL}${a.author.key}.json`, {
@@ -135,6 +137,7 @@ export const getBookById = async (id: string): Promise<Book> => {
         const editions = editionsData.entries || [];
 
         // Find the FIRST edition in the list that actually has a valid number_of_pages!
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const editionWithPages = editions.find((ed: any) =>
           typeof ed.number_of_pages === 'number' && ed.number_of_pages > 0
         );

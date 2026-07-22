@@ -139,7 +139,7 @@ export default function Navbar() {
                     onClick={() => setIsOpen(false)}
                     className="block w-full text-center py-2 bg-[#EFEBE1]/50 rounded text-[#424B2E] font-sans text-[11px] font-bold uppercase tracking-widest hover:bg-[#E5E0D8] transition-colors"
                   >
-                    See all results for "{searchTerm}"
+                    See all results for &quot;{searchTerm}&quot;
                   </Link>
 
                   <p className="text-[10px] font-serif italic text-[#5C613E]/60 text-center">

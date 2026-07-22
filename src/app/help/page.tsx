@@ -35,7 +35,7 @@ export default function HelpPage() {
             Your Bookshelf is your master archive. Every book you add from the search bar lands here first. From your Bookshelf, you can rate books, leave personal reviews, and record the names of people who recommended a specific work to you.
           </p>
           <p className="text-[#5C613E] italic text-sm">
-            Note: You cannot assign a book to "Currently Reading" directly from the Bookshelf. Active reading is handled exclusively in your Reading Tracks to maintain focus.
+            Note: You cannot assign a book to &quot;Currently Reading&quot; directly from the Bookshelf. Active reading is handled exclusively in your Reading Tracks to maintain focus.
           </p>
         </section>
 
@@ -61,10 +61,10 @@ export default function HelpPage() {
             Reading Journeys & Reviews
           </h2>
           <p className="mb-4">
-            Every time you read a book, a "Reading Journey" is logged. You can read a book multiple times, and each iteration will be saved to your timeline with its own start and end dates.
+            Every time you read a book, a <i>Reading Journey</i> is logged. You can read a book multiple times, and each iteration will be saved to your timeline with its own start and end dates.
           </p>
           <p>
-            When you finish a book, you'll be prompted to capture your "raw thoughts"; the immediate, unpolished feelings you have upon turning the last page. These are saved to your timeline alongside your polished, overarching review on the Bookshelf.
+            When you finish a book, you&apos;ll be prompted to capture your <i>raw thoughts</i>; the immediate, unpolished feelings you have upon turning the last page. These are saved to your timeline alongside your polished, overarching review on the Bookshelf.
           </p>
         </section>
 
@@ -73,7 +73,7 @@ export default function HelpPage() {
             Spotted a bug or still have questions?
           </h2>
           <p className="mb-6">
-            If something isn't working right, if anything is still unclear, if you have suggestions, or if you simply want to chat about what you're currently reading, my inbox is always open.
+            If something isn&apos;t working right, if anything is still unclear, if you have suggestions, or if you simply want to chat about what you&apos;re currently reading, my inbox is always open.
           </p>
 
           <p className="font-serif italic text-[#5C613E] mb-8">

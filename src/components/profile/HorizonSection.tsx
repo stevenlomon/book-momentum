@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -13,8 +13,8 @@ interface HorizonSectionProps {
 // The only user interactive section (for now) on the Profile page. Now receives initial data from its server component parent
 // Here we'll implement the modal that pops up when adding a Horizon book which will require useState
 export default function HorizonSection({ initialBooks }: HorizonSectionProps) {
+  const horizonBooks = initialBooks; // Simply grabs initialBooks now from the server. And doesn't need to be a state variable! Same reason as trackBooks in ReadingTracksSection
   const [activeSlot, setActiveSlot] = useState<number | null>(null); // Instead of `const [isModalOpen, setIsModalOpen] = useState(false);`, we track the specific slot clicked (1-5). If it's null, the modal is closed
-  const [horizonBooks, setHorizonBooks] = useState(initialBooks); // Simply grabs initialBooks now from the server
 
   // NEW: State for the Two-Tap Unassignment
   const [confirmingSlot, setConfirmingSlot] = useState<number | null>(null);
@@ -23,9 +23,9 @@ export default function HorizonSection({ initialBooks }: HorizonSectionProps) {
   const router = useRouter();
 
   // When router.refresh() happens, the server sends down new fresh props with new fresh data. And once again; this effect catches them and patches the UI instantly
-  useEffect(() => {
-    setHorizonBooks(initialBooks);
-  }, [initialBooks]);
+  // useEffect(() => {
+  //   setHorizonBooks(initialBooks);
+  // }, [initialBooks]); Since horizonBooks is no longer a state variable
 
   // And the new clean refresh function. No more client-side fetch required
   const refreshHorizon = () => {
@@ -74,7 +74,7 @@ export default function HorizonSection({ initialBooks }: HorizonSectionProps) {
           The Horizon
         </h2>
         <p className="text-[#5C613E] mt-1 font-serif">
-          The dense masterpieces that we're building momentum towards. Capped strictly at five to ensure intent over accumulation.
+          The dense masterpieces that we&apos;re building momentum towards. Capped strictly at five to ensure intent over accumulation.
         </p>
       </div>
 

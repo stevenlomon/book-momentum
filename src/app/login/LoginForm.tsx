@@ -103,7 +103,7 @@ export default function LoginForm() {
       {/* Registration Link Stub */}
       <div className="mt-8 text-center border-t border-[#E5E0D8] pt-6">
         <p className="text-[#5C613E] font-serif text-sm">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-[#424B2E] font-sans text-[10px] font-bold tracking-widest uppercase hover:underline underline-offset-4 decoration-[#424B2E]/30 hover:decoration-[#424B2E] transition-all ml-1">
             Register
           </Link>
