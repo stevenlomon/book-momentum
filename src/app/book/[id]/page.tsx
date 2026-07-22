@@ -1,13 +1,23 @@
 import { getBookById } from '@/lib/api';
 import { checkBookInBookshelf } from '@/lib/db/bookshelf';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { notFound } from 'next/navigation'; // This is new and super super useful!
 import AddToBookshelfButton from '@/components/detail-page/AddToBookshelfButton';
 import ExpandableSummary from '@/components/detail-page/ExpandableSummary';
 
 export default async function DetailedViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const book = await getBookById(id);
+  // const book = await getBookById(id);
+  // Rather than trying to grab book directly, we're gonna do it systematically to ensure no full black error screen
+  let book;
+  try {
+    book = await getBookById(id);
+  } catch (error) {
+    // If there is an error in finding the book id or the user enters an invalid gibberish id, notFound intercepts the 
+    // request and redirects them to our custom 404 page at not-found.tsx! Next.js keeps impressing me
+    notFound();
+  }
 
   // With the book fetched server side, we can now run this server side check to see if it's in the user's bookshelf or not
   // using our new Data Access Layer function! Which will be passed as a new prop to the client component
@@ -22,7 +32,6 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
     );
   }
 
-  // Vibe coded render statement for now to keep momentum. Still turned out really pretty! AI these days, maaaan haha
   return (
     // The main outer card is now a bit wider to be able to properly contain all the data, especially summaries that go bonkers bananas haha
     <main className="min-h-screen p-8 max-w-6xl mx-auto">
