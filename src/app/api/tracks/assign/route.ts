@@ -15,11 +15,15 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { track_id, slot_id, bookshelf_item_id } = body;
+    // Now also extracting initial_current_page from the body
+    const { track_id, slot_id, bookshelf_item_id, initial_current_page } = body;
 
     if (!track_id || !slot_id || !bookshelf_item_id) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
+    // Safely parse the starting page, falling back to 0 if left blank
+    const startingPage = initial_current_page ? parseInt(initial_current_page, 10) : 0;
 
     // We are going to do multiple database updates at the same time. We're updating three Tables with this one; Reading_Journey,
     // Reading_Track, and Bookshelf_Item. Because of this, we're going to use a Postgres *Transaction*. This is my first time hearing about 
@@ -67,8 +71,18 @@ export async function POST(req: Request) {
         let activeJourneyId: string;
 
         if (checkedJourneyRows > 0) {
+          // The logic here is now upgraded
+
           // An active Reading Journey exists, grab its ID
           activeJourneyId = journeyCheckRes.rows[0].id;
+
+          // If the user gives a starting page, we update their existing active Reading Journey!
+          if (initial_current_page) {
+            await client.query(
+              'UPDATE "Reading_Journey" SET current_page = $1 WHERE id = $2',
+              [startingPage, activeJourneyId]
+            );
+          }
         } else {
           // No active Reading Journey exists, we need look at previous history to determine the iteration
           const iterationRes = await client.query(
@@ -88,8 +102,8 @@ export async function POST(req: Request) {
           await client.query(
             // started_at is taken care of by Postgres. current_page defaults to 0 when starting a new Reading Journey with the book
             `INSERT INTO "Reading_Journey" (id, current_page, bookshelf_item_id, iteration) 
-            VALUES ($1, 0, $2, $3)`,
-            [newJourneyId, bookshelf_item_id, nextIteration]
+            VALUES ($1, $2, $3, $4)`, // We now insert using our new dynamic startingPage instead of a hardcoded 0!
+            [newJourneyId, startingPage, bookshelf_item_id, nextIteration]
           );
 
           activeJourneyId = newJourneyId;

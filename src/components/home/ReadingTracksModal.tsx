@@ -23,6 +23,7 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
   // in the code knows how to save it
   const [stagedBook, setStagedBook] = useState<{ data: BookshelfItem | Book, source: 'UserBookshelf' | 'OpenLibrary' } | null>(null);
   const [customPageCount, setCustomPageCount] = useState<string>("");
+  const [initialCurrentPage, setInitialCurrentPage] = useState<string>(""); // New state for the new form input
 
   const { searchTerm, setSearchTerm, isSearching, results: externalBooks } = useBookSearch("Reading Tracks Modal Search Error:");
   const { books: bookshelfItems, isLoading: isLoadingUserBookshelf } = useBookshelf(isOpen);
@@ -30,7 +31,8 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
   const showExternalResults = searchTerm.trim().length >= 3;
 
   // Updated: We now accept an optional finalPageCount
-  const handleAssignBook = async (book: BookshelfItem | Book, source: 'UserBookshelf' | 'OpenLibrary', finalPageCount: number | null = null) => {
+  // Update #2: We now accept an optional initialCurrentPage!
+  const handleAssignBook = async (book: BookshelfItem | Book, source: 'UserBookshelf' | 'OpenLibrary', finalPageCount: number | null = null, startingPage: number = 0) => {
     if (!targetSlot) return;
 
     setIsAssigning(true);
@@ -48,7 +50,8 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
           body: JSON.stringify({
             track_id: targetSlot.trackId,
             slot_id: targetSlot.slotId,
-            bookshelf_item_id: userBookshelfItem.bookshelf_item_id
+            bookshelf_item_id: userBookshelfItem.bookshelf_item_id,
+            initial_current_page: startingPage
           })
         });
 
@@ -117,7 +120,8 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
             body: JSON.stringify({
               track_id: targetSlot.trackId,
               slot_id: targetSlot.slotId,
-              bookshelf_item_id: newBookshelfItemId
+              bookshelf_item_id: newBookshelfItemId,
+              initial_current_page: startingPage
             })
           })
           if (!assigningRes.ok) throw new Error(`Failed to assign book to Slot ${targetSlot}`);
@@ -178,6 +182,7 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
     setSearchTerm('');
     setStagedBook(null); // Wipe the memory so that our 2-step modal returns to Step 1 once a Currently Reading assignment flow is completed
     setCustomPageCount(""); // Also clear the custom_page_count input field for next time while we're here
+    setInitialCurrentPage(""); // Needs to be wiped clean too
     onClose();
   };
 
@@ -185,7 +190,10 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
   const handleFinalAssign = async () => {
     if (!stagedBook) return;
     const parsedPageCount = customPageCount.trim() !== "" ? parseInt(customPageCount, 10) : null;
-    await handleAssignBook(stagedBook.data, stagedBook.source, parsedPageCount);
+    const parsedCurrentPage = initialCurrentPage.trim() !== "" ? parseInt(initialCurrentPage, 10) : 0;
+
+    // Pass both variables cleanly
+    await handleAssignBook(stagedBook.data, stagedBook.source, parsedPageCount, parsedCurrentPage);
   };
 
   if (!isOpen) return null;
@@ -262,7 +270,7 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
                     {/* Cozy, muted footer placed cleanly outside the list */}
                     <p className="text-[11px] font-serif italic text-[#5C613E]/60 text-center pt-4 border-t border-[#E5E0D8]/60 mx-4">
                       All book data provided by{' '}
-                      <a 
+                      <a
                         href='https://archive.org/donate/?platform=ol'
                         target="_blank"
                         rel="noopener noreferrer"
@@ -326,26 +334,64 @@ export default function ReadingTracksModal({ isOpen, onClose, targetSlot, onSucc
 
             {/* The Prompt */}
             <div className="bg-[#EFEBE1]/50 p-5 rounded border border-[#E5E0D8] mb-8 mt-2">
-              <p className="text-[#2C302E] text-sm mb-4 leading-relaxed">
-                You are about to start reading this book. For the most accurate progress tracking, we highly encourage entering the exact amount of pages in your specific physical edition.
+
+              {/* ZONE 1: Gentle Context Nudge */}
+              <p className="text-[#2C302E] text-sm mb-5 leading-relaxed">
+                Set up progress tracking for your edition.
               </p>
 
-              <div className="flex flex-col gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="5000"
-                  value={customPageCount}
-                  onChange={(e) => setCustomPageCount(e.target.value)}
-                  placeholder={stagedBook.data.page_count ? `e.g., ${stagedBook.data.page_count}` : "e.g., 350"}
-                  className="w-32 bg-[#FCF9F2] border border-[#424B2E]/30 rounded px-3 py-2 text-sm text-[#2C302E] placeholder:text-[#5C613E]/50 focus:outline-none focus:border-[#424B2E] transition-colors"
-                />
-                <span className="text-xs text-[#5C613E] italic font-serif">
-                  {stagedBook.data.page_count
-                    ? `*Optional. We guessed ~${stagedBook.data.page_count} pages based on this edition.`
-                    : "*Optional. If skipped, we will use our best estimate."}
-                </span>
+              {/* ZONE 2: Two-Column Input Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-2">
+
+                {/* Total Pages Column */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#5C613E]">
+                    Total Pages in Edition
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="5000"
+                    value={customPageCount}
+                    onChange={(e) => setCustomPageCount(e.target.value)}
+                    placeholder={stagedBook.data.page_count ? `e.g., ${stagedBook.data.page_count}` : "e.g., 288"}
+                    className="w-full bg-[#FCF9F2] border border-[#E5E0D8] rounded px-3 py-2 text-sm text-[#2C302E] placeholder:text-[#5C613E]/50 focus:outline-none focus:border-[#424B2E] transition-colors shadow-sm"
+                  />
+                  <span className="text-[10px] text-[#5C613E] italic font-serif">
+                    {stagedBook.data.page_count
+                      ? `*If skipped, we'll use ~${stagedBook.data.page_count}.`
+                      : "*If skipped, we'll estimate."}
+                  </span>
+                </div>
+
+                {/* Current Page Column */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#5C613E]">
+                    Current Page
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5000"
+                    value={initialCurrentPage}
+                    onChange={(e) => setInitialCurrentPage(e.target.value)}
+                    placeholder="e.g., 43"
+                    className="w-full bg-[#FCF9F2] border border-[#E5E0D8] rounded px-3 py-2 text-sm text-[#2C302E] placeholder:text-[#5C613E]/50 focus:outline-none focus:border-[#424B2E] transition-colors shadow-sm"
+                  />
+                  <span className="text-[10px] text-[#5C613E] italic font-serif">
+                    *If skipped, starts at page 0.
+                  </span>
+                </div>
+
               </div>
+
+              {/* ZONE 3: Subtle Re-read Footnote */}
+              <div className="mt-6 pt-4 border-t border-[#E5E0D8]">
+                <p className="text-[11px] text-[#5C613E] font-serif italic">
+                  🌿 Re-reading? You can log past journeys anytime from your Bookshelf.
+                </p>
+              </div>
+
             </div>
 
             {/* Action Buttons */}
