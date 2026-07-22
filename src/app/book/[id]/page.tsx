@@ -1,7 +1,6 @@
 import { getBookById } from '@/lib/api';
 import { checkBookInBookshelf } from '@/lib/db/bookshelf';
 import Image from 'next/image';
-import Link from 'next/link';
 import { notFound } from 'next/navigation'; // This is new and super super useful!
 import AddToBookshelfButton from '@/components/detail-page/AddToBookshelfButton';
 import ExpandableSummary from '@/components/detail-page/ExpandableSummary';
@@ -14,7 +13,7 @@ export default async function DetailedViewPage({ params }: { params: Promise<{ i
   let book;
   try {
     book = await getBookById(id);
-  } catch (error) {
+  } catch {
     // If there is an error in finding the book id or the user enters an invalid gibberish id, notFound intercepts the 
     // request and redirects them to our custom 404 page at not-found.tsx! Next.js keeps impressing me
     notFound();

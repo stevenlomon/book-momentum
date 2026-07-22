@@ -28,10 +28,17 @@ export async function getCurrentUser() {
     console.log("CurrentUser fetch results", currentUser);
 
     return currentUser || null;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Next.js throws DYNAMIC_SERVER_USAGE during 'npm run build' to mark routes as dynamic.
     // We must re-throw it so Next.js can switch the route mode without logging a fake error!
-    if (err?.digest === 'DYNAMIC_SERVER_USAGE') {
+
+    // Safely check if the error is an object and contains the Next.js specific digest without using `any`
+    if (
+      err !== null && 
+      typeof err === 'object' && 
+      'digest' in err && 
+      err.digest === 'DYNAMIC_SERVER_USAGE'
+    ) {
       throw err;
     }
 
