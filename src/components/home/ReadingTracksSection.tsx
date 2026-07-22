@@ -224,12 +224,12 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
     <div className="flex justify-center w-full">
 
       {/* The inner container naturally shrinks to fit 1, 2, or 3 tracks */}
-      <div className="flex flex-col xl:flex-row w-full justify-center divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8]">
+      <div className="relative flex flex-col xl:flex-row w-full xl:w-fit justify-center divide-y xl:divide-y-0 xl:divide-x divide-[#E5E0D8]">
 
         {/* Render the Active Tracks: We map over localTracks now! */}
         {localTracks.map((track) => (
           // `w-1/3` and `shrink-0` now explicitly lock the geometry to prevent flexbox auto-squishing
-          <section key={track.id} className="w-full xl:w-1/3 shrink-0 py-8 xl:py-0 px-4 xl:px-6 flex flex-col">
+          <section key={track.id} className="w-full xl:w-100 shrink-0 py-8 xl:py-0 px-4 xl:px-6 flex flex-col">
 
             {/* `min-h-25` guarantees the grids align perfectly regardless of description length */}
             <div className="mb-6 min-h-25 group relative">
@@ -429,7 +429,7 @@ export default function ReadingTracksSection({ initialTrackMetadata, initialTrac
           ) : (
             <>
               {/* DESKTOP GHOST TRACK: Absolute positioned hover zone so it doesn't affect active track centering! */}
-              <div className="hidden xl:flex absolute left-full top-0 h-full w-100 flex-col opacity-0 hover:opacity-100 transition-opacity">
+              <div className="hidden xl:flex absolute left-full top-0 h-full w-100 flex-col opacity-20 hover:opacity-100 transition-opacity">
                 {/* Matches padding of the active tracks and adds the visual border */}
                 <div className="w-full h-full border-l border-[#E5E0D8] pl-8 flex flex-col">
                   {/* The button spans the entire height; we don't lie about the shape of a Reading Track! */}
