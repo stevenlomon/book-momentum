@@ -60,7 +60,7 @@ export default function AddToBookshelfButton({ book, isAlreadyInBookshelf }: Add
       // Success state updated to integrate with the server side seeding
       setButtonText("Added ✓");
       setTimeout(() => {
-        setButtonText("Add to Bookshelf"); // Lock it into the finished state
+        setButtonText("Resting in Bookshelf"); // Lock it into the finished state
         // setIsProcessing(false); // "Unlock the button again" -> Do not unlock the button!
         router.refresh(); // Tell the parent server component to update in the background
       }, 1500);
