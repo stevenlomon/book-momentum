@@ -2,6 +2,8 @@ import LogoutButton from '@/components/settings/LogoutButton';
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic'; // Signals to Next.js that this page is server-rendered per request!
+
 export default async function SettingsPage() {
   const user = await getCurrentUser();
 

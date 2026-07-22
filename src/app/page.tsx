@@ -1,6 +1,8 @@
 import ReadingTracksSection from '@/components/home/ReadingTracksSection';
 import { getReadingTracks } from '@/lib/db/tracks';
 
+export const dynamic = 'force-dynamic'; // Signals to Next.js that this page is server-rendered per request!
+
 // This is now a Server Component that does Server Side fetching too! Implementing the same "server seeds the client" pattern that we 
 // use for the Bookshelf page! Therefore it now needs to be async
 export default async function HomePage() {

@@ -5,6 +5,8 @@ import HorizonSection from '@/components/profile/HorizonSection';
 import { getHorizonBooks } from '@/lib/db/horizon';
 import WelcomeModal from '@/components/profile/WelcomeModal';
 
+export const dynamic = 'force-dynamic'; // Signals to Next.js that this page is server-rendered per request!
+
 // We now accept searchParams to look for our secret onboarding flag!
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ greet?: string }> }) {
   // The Server Side user check, which runs before the browser even sees the page! 
