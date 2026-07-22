@@ -1,5 +1,7 @@
 # Florilegium
 
+> **Status:** Currently in Beta, live at [beta.florilegium.page](https://beta.florilegium.page)
+
 ## *A digital renaissance book garden*
 
 Florilegium is a sanctuary designed, first and foremost, for myself to rekindle and cultivate my love for reading.  
