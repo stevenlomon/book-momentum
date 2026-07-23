@@ -24,6 +24,7 @@ export default function JourneyTimeline({ bookshelfItemId, journeys = [] }: Jour
   const [editFinishedAt, setEditFinishedAt] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
 
@@ -122,6 +123,33 @@ export default function JourneyTimeline({ bookshelfItemId, journeys = [] }: Jour
     }
   };
 
+  const handleDeleteJourney = async (journeyId: string) => {
+    // A quick native browser check to prevent fat-finger deletions
+    if (!window.confirm("Are you sure you want to completely erase this reading journey? This cannot be undone.")) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch('/api/journey', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ journey_id: journeyId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete journey');
+      }
+
+      setEditingId(null);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : 'Failed to delete journey. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Sort journeys by iteration (1st read, 2nd read, etc.)
   const sortedJourneys = [...journeys].sort((a, b) => a.iteration - b.iteration);
 
@@ -141,8 +169,8 @@ export default function JourneyTimeline({ bookshelfItemId, journeys = [] }: Jour
                 {/* Node */}
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 mt-1 shadow-sm transition-colors ${isFinished && !isEditing
-                      ? 'bg-[#EFEBE1] border-[#424B2E] text-[#424B2E]'
-                      : 'bg-white border-[#5C613E]/50 text-[#5C613E]'
+                    ? 'bg-[#EFEBE1] border-[#424B2E] text-[#424B2E]'
+                    : 'bg-white border-[#5C613E]/50 text-[#5C613E]'
                     }`}
                 >
                   <span className="font-sans text-[10px] font-bold">{journey.iteration}</span>
@@ -187,19 +215,33 @@ export default function JourneyTimeline({ bookshelfItemId, journeys = [] }: Jour
                         className="bg-[#FCF9F2] border border-[#E5E0D8] rounded p-3 font-serif text-sm text-[#2C302E] placeholder:text-[#5C613E]/50 outline-none focus:border-[#424B2E] resize-none"
                       />
                     </div>
-                    <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-[#E5E0D8]">
+                    
+                    {/* Unified Action Bar (Option 2) */}
+                    <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-[#E5E0D8]">
+                      {isFinished && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteJourney(journey.id)}
+                          disabled={isUpdating || isDeleting}
+                          className="px-3 py-2 mr-2 text-xs font-sans uppercase tracking-widest text-[#8C3A3A]/70 hover:text-[#8C3A3A] hover:bg-[#8C3A3A]/10 rounded transition-all disabled:opacity-50"
+                        >
+                          {isDeleting ? 'Deleting...' : 'Delete'}
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => setEditingId(null)}
-                        disabled={isUpdating}
-                        className="text-xs font-sans uppercase tracking-widest text-[#5C613E]/70 hover:text-[#5C613E] transition-colors"
+                        disabled={isUpdating || isDeleting}
+                        className="px-3 py-2 text-xs font-sans uppercase tracking-widest text-[#5C613E]/70 hover:text-[#5C613E] hover:bg-[#5C613E]/10 rounded transition-all disabled:opacity-50"
                       >
                         Cancel
                       </button>
+                      
                       <button
                         type="button"
                         onClick={() => handleUpdateJourney(journey.id)}
-                        disabled={isUpdating}
+                        disabled={isUpdating || isDeleting}
                         className="px-5 py-2 bg-[#424B2E] text-[#FCF9F2] text-xs font-sans uppercase tracking-widest rounded disabled:opacity-50 hover:bg-[#343b24] transition-colors shadow-sm"
                       >
                         {isUpdating ? 'Saving...' : 'Save Updates'}
@@ -213,7 +255,6 @@ export default function JourneyTimeline({ bookshelfItemId, journeys = [] }: Jour
                         {isFinished ? 'Completed Read' : 'Active Read'}
                       </h4>
 
-                      {/* Wrapped the date and Edit button in an inline flex container */}
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => startEditing(journey)}

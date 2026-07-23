@@ -205,3 +205,54 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 };
+
+// New route to delete Reading Journeys. But only past ones! Active Reading Journeys are handled exclusively in the Reading Tracks UI
+export async function DELETE(req: Request) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json();
+    const { journey_id } = body;
+
+    if (!journey_id) {
+      return NextResponse.json({ error: 'Missing required journey_id' }, { status: 400 });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Guardrail: Verify ownership AND ensure the journey is completed
+      const ownershipCheck = await client.query(`
+        SELECT bi.id, rj.finished_at FROM "Bookshelf_Item" bi
+        JOIN "Reading_Journey" rj ON bi.id = rj.bookshelf_item_id
+        WHERE rj.id = $1 AND bi.user_id = $2
+      `, [journey_id, user.id]);
+
+      if (ownershipCheck.rowCount === 0) throw new Error("ItemNotOwned");
+      if (ownershipCheck.rows[0].finished_at === null) throw new Error("ActiveJourney");
+
+      // Safely delete any attached Raw Thoughts (Log Posts) to prevent Foreign Key constraint errors
+      await client.query('DELETE FROM "Reading_Log_Post" WHERE reading_journey_id = $1', [journey_id]);
+
+      // Now delete the Journey itself
+      await client.query('DELETE FROM "Reading_Journey" WHERE id = $1', [journey_id]);
+
+      await client.query('COMMIT');
+      return NextResponse.json({ success: true, message: 'Journey deleted.' });
+    } catch (dbError) {
+      await client.query('ROLLBACK');
+      if (dbError instanceof Error) {
+        if (dbError.message === "ItemNotOwned") return NextResponse.json({ error: "Item not found or unauthorized" }, { status: 404 });
+        if (dbError.message === "ActiveJourney") return NextResponse.json({ error: "Active reading journeys must be managed from your Reading Tracks" }, { status: 400 });
+      }
+      throw dbError;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error deleting journey:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+};
