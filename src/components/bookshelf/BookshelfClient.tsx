@@ -12,7 +12,7 @@ interface BookshelfClientProps {
 const TABS = [
   { id: 'all', label: 'All Books' },
   { id: '1', label: 'Intend to Read' },
-  // { id: '2', label: 'Currently Reading' }, Since we don't allow the user to assign Currently Reading from the Bookshelf, there's no reason to show the filter! It's all managed from the Reading Tracks UI!
+  { id: '2', label: 'Currently Reading' }, // "Since we don't allow the user to assign Currently Reading from the Bookshelf, there's no reason to show the filter! It's all managed from the Reading Tracks UI!" Fair. But it causes confusion and cognitive dissonance when the math doesn't add up. Plus! Past code ensures that users can't change its "Currently Reading" status from the Bookshelf UI. And even tho "Currently Reading" is now visible as a dynamic Filter Tab, we still can't change Read status to "Currently Reading" from a book in the Bookshelf that is currently not of that status!
   { id: '3', label: 'Read' },
   { id: '4', label: 'Dropped' }
 ];
