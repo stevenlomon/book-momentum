@@ -63,8 +63,17 @@ export async function POST(req: Request) {
     const { book_id, status_id, horizon_slot = null } = body; // horizon_slot defaults to null
 
     const query = {
-      name: 'insert-user-bookshelf-item',
-      text: 'INSERT INTO "Bookshelf_Item"(id, user_id, book_id, status_id, horizon_slot) VALUES($1, $2, $3, $4, $5) RETURNING *',
+      name: 'upsert-user-bookshelf-item', // Upgraded from insert to upsert!
+      // `ON CONFLICT`, `DO UPDATE SET` and `COALESCE` all work in harmony to ensure no duplicates
+      text: `
+        INSERT INTO "Bookshelf_Item"(id, user_id, book_id, status_id, horizon_slot) 
+        VALUES($1, $2, $3, $4, $5)
+        ON CONFLICT (user_id, book_id) 
+        DO UPDATE SET 
+          status_id = EXCLUDED.status_id,
+          horizon_slot = COALESCE(EXCLUDED.horizon_slot, "Bookshelf_Item".horizon_slot)
+        RETURNING *
+      `,
       values: [itemId, user.id, book_id, status_id, horizon_slot]
     }
     const res = await pool.query(query);
