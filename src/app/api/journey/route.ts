@@ -27,6 +27,9 @@ export async function PATCH(req: Request) {
 
         if (ownershipCheck.rowCount === 0) throw new Error("ItemNotOwned");
 
+        // Grab the ID so we can re-number the timeline later
+        const bookshelfItemId = ownershipCheck.rows[0].id;
+
         // Update the Journey dates
         await client.query(`
           UPDATE "Reading_Journey" 
@@ -44,7 +47,7 @@ export async function PATCH(req: Request) {
           } else {
             // Upsert logic: Update if it exists, insert if it doesn't
             const logCheck = await client.query('SELECT id FROM "Reading_Log_Post" WHERE reading_journey_id = $1', [journey_id]);
-            
+
             if ((logCheck.rowCount ?? 0) > 0) {
               await client.query('UPDATE "Reading_Log_Post" SET notes = $1 WHERE reading_journey_id = $2', [trimmedNotes, journey_id]);
             } else {
@@ -56,6 +59,21 @@ export async function PATCH(req: Request) {
             }
           }
         }
+
+        // Re-number all journeys chronologically in case the edited dates shifted the timeline! 
+        // Yet another window function, yet another query I will need to return to. It'd gonna be a delight comparing and
+        // contrasting all of these haha
+        await client.query(`
+          WITH renumbered AS (
+            SELECT id, ROW_NUMBER() OVER (ORDER BY finished_at ASC NULLS LAST) AS new_iteration
+            FROM "Reading_Journey"
+            WHERE bookshelf_item_id = $1
+          )
+          UPDATE "Reading_Journey" rj
+          SET iteration = renumbered.new_iteration
+          FROM renumbered
+          WHERE rj.id = renumbered.id
+        `, [bookshelfItemId]);
 
         await client.query('COMMIT');
         return NextResponse.json({ success: true, message: 'Journey updated.' });
@@ -134,7 +152,7 @@ export async function POST(req: Request) {
     }
 
     // Allow started_at to be optional / null
-      const journeyStartedAt = started_at && started_at.trim() !== '' ? started_at : null;
+    const journeyStartedAt = started_at && started_at.trim() !== '' ? started_at : null;
 
     const client = await pool.connect();
 
@@ -249,6 +267,19 @@ export async function DELETE(req: Request) {
       await client.query(`
         WITH renumbered AS (
           SELECT id, ROW_NUMBER() OVER (ORDER BY iteration ASC) AS new_iteration
+          FROM "Reading_Journey"
+          WHERE bookshelf_item_id = $1
+        )
+        UPDATE "Reading_Journey" rj
+        SET iteration = renumbered.new_iteration
+        FROM renumbered
+        WHERE rj.id = renumbered.id
+      `, [bookshelfItemId]);
+
+      // Auto-sort by date. Yet another window function, yet another query I will need to return to
+      await client.query(`
+        WITH renumbered AS (
+          SELECT id, ROW_NUMBER() OVER (ORDER BY finished_at ASC NULLS LAST) AS new_iteration
           FROM "Reading_Journey"
           WHERE bookshelf_item_id = $1
         )
