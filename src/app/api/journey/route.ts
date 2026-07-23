@@ -224,8 +224,9 @@ export async function DELETE(req: Request) {
       await client.query('BEGIN');
 
       // Guardrail: Verify ownership AND ensure the journey is completed
+      // Updated to allow for the auto-adjust later down. Once again; I will return to this.
       const ownershipCheck = await client.query(`
-        SELECT bi.id, rj.finished_at FROM "Bookshelf_Item" bi
+        SELECT bi.id AS bookshelf_item_id, rj.finished_at FROM "Bookshelf_Item" bi
         JOIN "Reading_Journey" rj ON bi.id = rj.bookshelf_item_id
         WHERE rj.id = $1 AND bi.user_id = $2
       `, [journey_id, user.id]);
@@ -233,14 +234,32 @@ export async function DELETE(req: Request) {
       if (ownershipCheck.rowCount === 0) throw new Error("ItemNotOwned");
       if (ownershipCheck.rows[0].finished_at === null) throw new Error("ActiveJourney");
 
+      const bookshelfItemId = ownershipCheck.rows[0].bookshelf_item_id;
+
       // Safely delete any attached Raw Thoughts (Log Posts) to prevent Foreign Key constraint errors
       await client.query('DELETE FROM "Reading_Log_Post" WHERE reading_journey_id = $1', [journey_id]);
 
       // Now delete the Journey itself
       await client.query('DELETE FROM "Reading_Journey" WHERE id = $1', [journey_id]);
 
+      // Auto-adjust! Re-number remaining iterations sequentially (1, 2, 3...)
+      // `ROW_NUMBER() OVER (ORDER BY` is signature Window Function. And this is my first time using one. I will return here
+      // in a few days to properly crystallize and synthesize this so that I don't rack up a mountain of technical debt. For now,
+      // I will allow myself the luxury of "It just works"
+      await client.query(`
+        WITH renumbered AS (
+          SELECT id, ROW_NUMBER() OVER (ORDER BY iteration ASC) AS new_iteration
+          FROM "Reading_Journey"
+          WHERE bookshelf_item_id = $1
+        )
+        UPDATE "Reading_Journey" rj
+        SET iteration = renumbered.new_iteration
+        FROM renumbered
+        WHERE rj.id = renumbered.id
+      `, [bookshelfItemId]);
+
       await client.query('COMMIT');
-      return NextResponse.json({ success: true, message: 'Journey deleted.' });
+      return NextResponse.json({ success: true, message: 'Journey deleted and iterations re-ordered.' });
     } catch (dbError) {
       await client.query('ROLLBACK');
       if (dbError instanceof Error) {
