@@ -39,7 +39,7 @@ export default function HelpPage() {
             And from there it&apos;s simply a question of discernment: <i>Do I commit to reading this now? After the book I&apos;m currently reading? Or sometime shortly thereafter?</i>
           </p>
           <p className="text-base leading-relaxed text-[#5C613E]">
-            All while also having a clear sense of where our reading journey is headed. The dense masterpieces we want to cultivate momentum towards. Our reading life's North Star.
+            All while also having a clear sense of where our reading journey is headed. The dense masterpieces we want to cultivate momentum towards. Our reading life&apos;s North Star.
           </p>
           <p className="text-base leading-relaxed">
             Built with love and care.<br />
