@@ -25,6 +25,7 @@ export default function BookDetailsClient({ book, isAlreadyInBookshelf }: BookDe
   const displayTitle = activeEdition?.title || book.title;
   const displayCover = activeEdition?.cover_image_url || book.cover_image || 'https://via.placeholder.com/400x600?text=No+Cover';
   const displayPages = activeEdition?.page_count || book.page_count;
+  const displayIsbn = activeEdition?.isbn || book.isbn;
 
   // We construct a derived Book object to pass to the AddToBookshelfButton
   // so it saves the *exact* edition ID and data to Postgres instead of the Work ID.
@@ -72,6 +73,14 @@ export default function BookDetailsClient({ book, isAlreadyInBookshelf }: BookDe
               <>
                 <span className="opacity-50"> </span>
                 <span className="italic text-[#5C613E]/70 font-serif">Length unknown</span>
+              </>
+            )}
+
+            {/* New ISBN Display */}
+            {displayIsbn && (
+              <>
+                <span className="opacity-50">•</span>
+                <span className="font-mono text-xs tracking-tighter">ISBN: {displayIsbn}</span>
               </>
             )}
 

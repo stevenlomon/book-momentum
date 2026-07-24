@@ -10,7 +10,7 @@ export interface Edition {
   cover_image_url: string | null;
   page_count: number | null;
   publish_date?: string | null;
-  isbn?: string | null; // NEW: ISBN-13 or ISBN-10 identifier
+  isbn?: string | null; // For the Edition Switcher modal
 }
 
 export interface Book {
@@ -22,7 +22,8 @@ export interface Book {
   cover_image: string;
   page_count: number | null; // Data won't always be available but the key will. `number` or `null`
   default_edition_id?: string | null; // Won't always be available, not even the key. `string`, `null` or `undefined`
-  editions?: Edition[]; // NEW: The array of specific editions we map out
+  editions?: Edition[]; // The array of specific editions we map out
+  isbn?: string | null; // ISBN is now brought to the Work level too for the default edition
 }
 
 export interface TrackBook {

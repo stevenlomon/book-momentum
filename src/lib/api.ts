@@ -128,6 +128,7 @@ export const getBookById = async (id: string): Promise<Book> => {
     // We actively hunt across up to 50 editions (this "magic number" is now a constant in lib/constants.ts) for a realistic average page count
     let pageCount: number | null = null;
     let defaultEditionId: string | undefined = undefined;
+    let defaultIsbn: string | null = null; // Needed now that we want to show ISBN for the Defaul Edition
 
     try {
       const editionsRes = await fetch(`${BASE_URL}/works/${id}/editions.json?limit=${MAX_EDITIONS_FOR_PAGE_COUNT_ESTIMATE}`, {
@@ -156,8 +157,15 @@ export const getBookById = async (id: string): Promise<Book> => {
           // Round average to nearest 50 (this constant will never change. I would argue that knowing that a work is approx. 375 pages for example is too granular and only adds unnessecary cognitive strain. It's 350 or 400. We also floor it at 50)
           pageCount = Math.max(50, Math.round(avgPages / 50) * 50);
 
-          // Use the first valid edition as the primary default edition ID
-          defaultEditionId = editionsWithPages[0].key.split('/').pop();
+          // Extract the ID and the ISBN from the best edition
+          const bestEd = editionsWithPages[0];
+          defaultEditionId = bestEd.key.split('/').pop();
+          defaultIsbn = bestEd.isbn_13?.[0] || bestEd.isbn_10?.[0] || null;
+
+        } else if (editions.length > 0) {
+          const fallbackEd = editions[0];
+          defaultEditionId = fallbackEd.key.split('/').pop();
+          defaultIsbn = fallbackEd.isbn_13?.[0] || fallbackEd.isbn_10?.[0] || null;
         }
       }
     } catch (err) {
@@ -175,6 +183,7 @@ export const getBookById = async (id: string): Promise<Book> => {
       page_count: pageCount,
       default_edition_id: defaultEditionId,
       // editions: mappedEditions, Outsourced now to getEditionsForWork below
+      isbn: defaultIsbn, // But we do include the ISBN now for the default edition
     };
   } catch (err) {
     console.error(`Server error fetching book details with id ${id} using getBookById:`, err);
@@ -206,7 +215,7 @@ export const getEditionsForWork = async (workId: string): Promise<Edition[]> => 
       .filter((ed: any) => ed && ed.key && ed.covers && ed.covers.length > 0)
       .map((ed: any) => {
         const editionId = ed.key ? ed.key.split('/').pop() : Math.random().toString();
-        const edCoverId = ed.covers[0]; 
+        const edCoverId = ed.covers[0];
 
         // Extract primary ISBN (prefer ISBN-13, fallback to ISBN-10)
         const primaryIsbn = ed.isbn_13?.[0] || ed.isbn_10?.[0] || null;

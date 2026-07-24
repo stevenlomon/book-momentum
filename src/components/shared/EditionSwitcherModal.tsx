@@ -44,10 +44,6 @@ export default function EditionSwitcherModal({ isOpen, onClose, workId, onSelect
 
   if (!isOpen) return null; // Early return guard clause
 
-  // The Gatekeeper: Only let through editions that have BOTH a cover and a page count. We aggressively filter out the messy data from Open Library 
-  // to ensure that the user only ever interacts with proper editions and not missing-data-Frankenstein editions
-  const premiumEditions = editions.filter(ed => ed.cover_image_url && ed.page_count);
-
   // Fully vibe coded return render statement
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2C302E]/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
