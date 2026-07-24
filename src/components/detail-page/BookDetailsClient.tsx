@@ -115,7 +115,7 @@ export default function BookDetailsClient({ book, isAlreadyInBookshelf }: BookDe
       <EditionSwitcherModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        editions={book.editions}
+        workId={book.id}
         currentEditionId={activeEdition?.id}
         onSelectEdition={(edition) => {
           setActiveEdition(edition);

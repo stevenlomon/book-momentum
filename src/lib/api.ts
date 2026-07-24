@@ -1,5 +1,5 @@
 import { Book, Author, Edition } from './types';
-import { MAX_EDITIONS_TO_GRAB_PAGE_COUNT_ESTIMATE_FROM as MAX } from './constants';
+import { MAX_EDITIONS_FOR_PAGE_COUNT_ESTIMATE, MAX_EDITIONS_FOR_EDITION_SWITCHER } from './constants';
 
 // For our communication with the Open Library (dropped Gutenberg) where we'll get all book data
 const BASE_URL = 'https://openlibrary.org';
@@ -77,6 +77,8 @@ export const searchBooks = async (query: string, page = 1, limit = 5) => { // Ke
   }
 };
 
+// Rather than trying to do double duty grabbing Works *and* Editions, this API function now goes back to only focusing on Works. We outsource 
+// the responsibility of fetching Editions to our new getEditionsForWork function below this one
 export const getBookById = async (id: string): Promise<Book> => {
   try {
     // Fetch the exact Work using the ID we stripped out during the search
@@ -126,10 +128,9 @@ export const getBookById = async (id: string): Promise<Book> => {
     // We actively hunt across up to 50 editions (this "magic number" is now a constant in lib/constants.ts) for a realistic average page count
     let pageCount: number | null = null;
     let defaultEditionId: string | undefined = undefined;
-    let mappedEditions: Edition[] = []; // Initialize our editions array!
 
     try {
-      const editionsRes = await fetch(`${BASE_URL}/works/${id}/editions.json?limit=${MAX}`, {
+      const editionsRes = await fetch(`${BASE_URL}/works/${id}/editions.json?limit=${MAX_EDITIONS_FOR_PAGE_COUNT_ESTIMATE}`, {
         headers: getHeaders(),
       });
 
@@ -157,28 +158,6 @@ export const getBookById = async (id: string): Promise<Book> => {
 
           // Use the first valid edition as the primary default edition ID
           defaultEditionId = editionsWithPages[0].key.split('/').pop();
-
-          // Now we can map the filtered editions into our new strict Edition type!
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          mappedEditions = editionsWithPages.map((ed: any) => {
-            const editionId = ed.key ? ed.key.split('/').pop() : Math.random().toString();
-            
-            // Construct the Medium (-M) cover image URL if a cover exists. Medium for Edition covers for bandwidth optimization!
-            const edCoverId = ed.covers && ed.covers.length > 0 ? ed.covers[0] : null;
-            const edCoverUrl = edCoverId ? `${COVER_BASE_URL}/${edCoverId}-M.jpg` : null;
-
-            return {
-              id: editionId,
-              title: ed.title || data.title || 'Unknown Title',
-              cover_image_url: edCoverUrl,
-              page_count: ed.number_of_pages,
-              publish_date: ed.publish_date || null
-            };
-          });
-
-        } else if (editions.length > 0) {
-          // Fallback: If no edition lists page counts, grab the ID of the first edition entry
-          defaultEditionId = editions[0].key.split('/').pop();
         }
       }
     } catch (err) {
@@ -195,7 +174,7 @@ export const getBookById = async (id: string): Promise<Book> => {
       cover_image: coverUrl,
       page_count: pageCount,
       default_edition_id: defaultEditionId,
-      editions: mappedEditions, // Editions array now attached to the payload! This data was always extracted, it's just that now we don't throw it away haha
+      // editions: mappedEditions, Outsourced now to getEditionsForWork below
     };
   } catch (err) {
     console.error(`Server error fetching book details with id ${id} using getBookById:`, err);
@@ -205,5 +184,41 @@ export const getBookById = async (id: string): Promise<Book> => {
     } else {
       throw new Error("An unexpected network error occurred while contacting Open Library."); //
     }
+  }
+};
+
+// Dedicated API function purely for fetching Editions for a Work using our new constant
+export const getEditionsForWork = async (workId: string): Promise<Edition[]> => {
+  try {
+    const res = await fetch(`${BASE_URL}/works/${workId}/editions.json?limit=${MAX_EDITIONS_FOR_EDITION_SWITCHER}`, {
+      headers: getHeaders(),
+    });
+
+    if (!res.ok) throw new Error(`Open Library API returned status: ${res.status}`);
+
+    const data = await res.json();
+    const editions = data.entries || [];
+
+    // Filter and map premium editions (must have pages and a cover)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const premiumEditions: Edition[] = editions
+      .filter((ed: any) => typeof ed.number_of_pages === 'number' && ed.number_of_pages > 0 && ed.covers && ed.covers.length > 0)
+      .map((ed: any) => {
+        const editionId = ed.key ? ed.key.split('/').pop() : Math.random().toString();
+        const edCoverId = ed.covers[0]; 
+
+        return {
+          id: editionId,
+          title: ed.title || 'Unknown Title',
+          cover_image_url: `${COVER_BASE_URL}/${edCoverId}-M.jpg`,
+          page_count: ed.number_of_pages,
+          publish_date: ed.publish_date || null
+        };
+      });
+
+    return premiumEditions;
+  } catch (err) {
+    console.error(`Error fetching editions for work ${workId}:`, err);
+    return []; // Return empty array on failure so the UI gracefully shows the zero-state
   }
 };
